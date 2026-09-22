@@ -3,69 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cantina Express - Pedidos</title>
+  <title>Cantina Express Cyberpunk - E.E. Prof. Aggeo Pereira do Amaral</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <meta name="theme-color" content="#16a34a">
-</head>
-<body class="bg-slate-50 text-slate-800 antialiased pb-28 select-none">
+  <meta name="theme-color" content="#030712">
 
-  <!-- Top Bar -->
-  <header class="sticky top-0 z-30 bg-emerald-600 text-white shadow px-4 py-3 flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <i class="ph ph-fork-knife text-2xl"></i>
-      <div>
-        <h1 class="font-bold text-base leading-tight">Cantina Express</h1>
-        <p class="text-xs text-emerald-100">Antecipe seu pedido para o intervalo!</p>
+  <style>
+    @keyframes pulse-btn {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.18); filter: drop-shadow(0 0 10px #06b6d4); }
+      100% { transform: scale(1); }
+    }
+    .animate-cyber-pulse {
+      animation: pulse-btn 0.25s ease-in-out;
+    }
+    .cyber-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+    .cyber-card:hover {
+      border-color: rgba(236, 72, 153, 0.6);
+      box-shadow: 0 0 15px rgba(236, 72, 153, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased pb-32 select-none min-h-screen">
+
+  <!-- Header Cyberpunk -->
+  <header class="sticky top-0 z-30 bg-slate-950/90 backdrop-blur-md border-b border-cyan-500/30 px-4 py-3 shadow-[0_4px_20px_rgba(6,182,212,0.15)]">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-fuchsia-600 p-0.5 shadow-[0_0_12px_rgba(6,182,212,0.5)]">
+          <div class="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center text-cyan-400 text-xl font-bold">
+            <i class="ph ph-lightning"></i>
+          </div>
+        </div>
+        <div>
+          <span class="text-[10px] font-mono tracking-widest uppercase text-pink-400 font-bold block">
+            Escola Estadual Prof. Aggeo Pereira do Amaral
+          </span>
+          <h1 class="font-extrabold text-sm tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-fuchsia-400">
+            CANTINA EXPRESS // CYBER 2026
+          </h1>
+        </div>
+      </div>
+      <div class="flex flex-col items-end">
+        <span class="inline-flex items-center gap-1.5 bg-cyan-950/80 border border-cyan-500/40 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.3)]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> ONLINE
+        </span>
       </div>
     </div>
-    <span class="inline-flex items-center gap-1 bg-emerald-700/60 px-2.5 py-1 rounded-full text-xs font-medium">
-      <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span> Aberto
-    </span>
   </header>
 
-  <!-- Lista de Lanches Dinâmica -->
+  <!-- Banner de Horários -->
+  <div class="max-w-md mx-auto px-4 pt-3">
+    <div class="bg-gradient-to-r from-slate-900 to-slate-950 p-2.5 rounded-xl border border-pink-500/20 flex items-center justify-between text-[11px] font-mono">
+      <span class="text-slate-400 flex items-center gap-1">
+        <i class="ph ph-clock-countdown text-pink-400 text-sm"></i> INTERVALOS HOJE:
+      </span>
+      <span class="text-cyan-400 font-bold">09:45 • 15:15 • 20:30</span>
+    </div>
+  </div>
+
+  <!-- Catálogo de Lanches -->
   <main class="max-w-md mx-auto p-4">
-    <div id="lista-produtos" class="grid grid-cols-1 gap-3">
-      <p class="text-center text-xs text-slate-400 py-8">Carregando cardápio...</p>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="text-xs font-mono uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+        <i class="ph ph-squares-four text-cyan-400"></i> Cardápio em Tempo Real
+      </h2>
+      <span id="contador-itens-disponiveis" class="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/30">
+        Carregando...
+      </span>
+    </div>
+
+    <div id="lista-produtos" class="grid grid-cols-1 gap-3.5">
+      <div class="text-center py-12 text-slate-500 font-mono text-xs">
+        <i class="ph ph-circle-notch animate-spin text-2xl text-cyan-400 mb-2 block"></i>
+        CONECTANDO AO TERMINAL...
+      </div>
     </div>
   </main>
 
-  <!-- Barra Inferior Fixa do Carrinho -->
-  <footer id="barra-carrinho" class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-4 shadow-xl z-20 transition-transform duration-300 translate-y-full">
+  <!-- Barra Inferior do Carrinho -->
+  <footer id="barra-carrinho" class="fixed bottom-0 inset-x-0 bg-slate-950/95 border-t border-cyan-500/40 p-4 shadow-[0_-8px_25px_rgba(6,182,212,0.2)] z-20 transition-transform duration-300 translate-y-full backdrop-blur-lg">
     <div class="max-w-md mx-auto flex items-center justify-between">
       <div>
-        <p class="text-xs text-slate-500 font-medium">Total do Pedido</p>
-        <p id="total-valor" class="text-lg font-bold text-slate-800">R$ 0,00</p>
+        <p class="text-[10px] font-mono uppercase tracking-wider text-slate-400">Total do Pedido</p>
+        <p id="total-valor" class="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-emerald-300 to-yellow-300 font-mono">
+          R$ 0,00
+        </p>
       </div>
-      <button onclick="abrirCheckout()" class="bg-emerald-600 active:bg-emerald-700 text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-md flex items-center gap-2">
-        Avançar <i class="ph ph-arrow-right font-bold"></i>
+      <button onclick="abrirCheckout()" class="bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:from-cyan-400 hover:to-fuchsia-500 text-slate-950 font-black text-xs uppercase tracking-wider px-5 py-3 rounded-xl shadow-[0_0_15px_rgba(6,182,212,0.6)] flex items-center gap-2 active:scale-95 transition">
+        RESERVAR AGORA <i class="ph ph-caret-right text-base font-bold"></i>
       </button>
     </div>
   </footer>
 
   <!-- Modal Checkout -->
-  <div id="modal-checkout" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center">
-    <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h2 class="text-base font-bold text-slate-800">Dados da Retirada</h2>
-        <button onclick="fecharCheckout()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="ph ph-x"></i></button>
+  <div id="modal-checkout" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-slate-900 border border-cyan-500/50 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 shadow-[0_0_30px_rgba(6,182,212,0.3)] space-y-4 max-h-[92vh] overflow-y-auto">
+      
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <span class="text-[10px] font-mono text-pink-400 font-bold uppercase">Aggeo Pereira do Amaral</span>
+          <h3 class="text-base font-black text-cyan-300 tracking-wide">CONFIRMAR RETIRADA</h3>
+        </div>
+        <button onclick="fecharCheckout()" class="text-slate-400 hover:text-pink-400 text-2xl transition">
+          <i class="ph ph-x"></i>
+        </button>
       </div>
 
-      <form onsubmit="finalizarPedido(event)" class="space-y-3">
+      <form onsubmit="finalizarPedido(event)" class="space-y-3.5 font-mono">
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Seu Nome Completo</label>
-          <input type="text" id="aluno-nome" required placeholder="Ex: Gabriel Alves" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+          <label class="block text-[11px] text-slate-300 font-bold uppercase mb-1">Nome Completo do Aluno</label>
+          <input type="text" id="aluno-nome" required placeholder="Ex: Lucas Henrique" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-100 placeholder-slate-600 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Turma / Série</label>
-            <input type="text" id="aluno-turma" required placeholder="Ex: 3º B" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+            <label class="block text-[11px] text-slate-300 font-bold uppercase mb-1">Turma / Série</label>
+            <input type="text" id="aluno-turma" required placeholder="Ex: 2º A Técnico" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-100 placeholder-slate-600 outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Intervalo de Retirada</label>
-            <select id="horario-retirada" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500 bg-white">
+            <label class="block text-[11px] text-slate-300 font-bold uppercase mb-1">Intervalo</label>
+            <select id="horario-retirada" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-cyan-300 outline-none focus:border-cyan-400 transition">
               <option value="Manhã (09:45)">Manhã (09:45)</option>
               <option value="Tarde (15:15)">Tarde (15:15)</option>
               <option value="Noite (20:30)">Noite (20:30)</option>
@@ -74,45 +136,63 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Forma de Pagamento</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="border p-2.5 rounded-lg flex items-center gap-2 cursor-pointer has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
-              <input type="radio" name="pagamento" value="Dinheiro" checked onchange="toggleTroco(true)" class="accent-emerald-600">
-              <span class="text-xs font-bold text-slate-700">💵 Dinheiro</span>
+          <label class="block text-[11px] text-slate-300 font-bold uppercase mb-1.5">Método de Pagamento</label>
+          <div class="grid grid-cols-2 gap-2.5">
+            <label class="border border-slate-700 bg-slate-950 p-2.5 rounded-lg flex items-center gap-2 cursor-pointer has-[:checked]:border-cyan-400 has-[:checked]:bg-cyan-950/30 transition">
+              <input type="radio" name="pagamento" value="Dinheiro" checked onchange="trocarMetodo('Dinheiro')" class="accent-cyan-400">
+              <span class="text-xs font-bold text-slate-200">💵 Dinheiro</span>
             </label>
-            <label class="border p-2.5 rounded-lg flex items-center gap-2 cursor-pointer has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
-              <input type="radio" name="pagamento" value="Pix" onchange="toggleTroco(false)" class="accent-emerald-600">
-              <span class="text-xs font-bold text-slate-700">⚡ Pix</span>
+            <label class="border border-slate-700 bg-slate-950 p-2.5 rounded-lg flex items-center gap-2 cursor-pointer has-[:checked]:border-pink-500 has-[:checked]:bg-pink-950/30 transition">
+              <input type="radio" name="pagamento" value="Pix" onchange="trocarMetodo('Pix')" class="accent-pink-500">
+              <span class="text-xs font-bold text-slate-200">⚡ Pix</span>
             </label>
           </div>
         </div>
 
         <div id="campo-troco">
-          <label class="block text-xs font-bold text-slate-600 mb-1">Troco para quanto? (Opcional)</label>
-          <input type="number" step="0.50" id="troco-para" placeholder="Ex: 20.00" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+          <label class="block text-[11px] text-slate-300 font-bold uppercase mb-1">Troco para quanto? (Opcional)</label>
+          <input type="number" step="0.50" id="troco-para" placeholder="Ex: 20.00" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-100 placeholder-slate-600 outline-none focus:border-cyan-400 transition">
         </div>
 
-        <button type="submit" id="btn-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
-          Confirmar Pedido
+        <div id="campo-pix" class="hidden bg-slate-950 p-3.5 rounded-xl border border-pink-500/40 text-center space-y-2.5">
+          <span class="text-[10px] font-bold text-pink-400 tracking-wider uppercase block">
+            QR Code Oficial de Pagamento Cantina
+          </span>
+          <div id="container-qrcode-pix" class="flex flex-col items-center justify-center p-2 bg-white rounded-lg mx-auto w-44 h-44 border border-slate-300 shadow-inner">
+            <p class="text-slate-400 text-[10px]">Aguardando QR Code...</p>
+          </div>
+          <div class="text-[11px] text-slate-300">
+            Chave Pix: <b id="lbl-pix-chave" class="text-cyan-300 select-all font-mono">cantina.aggeo@escola.sp.gov.br</b>
+          </div>
+          <button type="button" onclick="copiarChavePix()" class="text-[10px] bg-pink-950/80 text-pink-300 border border-pink-500/40 hover:bg-pink-900 px-3 py-1.5 rounded-lg transition font-bold">
+            <i class="ph ph-copy"></i> Copiar Chave Pix
+          </button>
+        </div>
+
+        <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black py-3.5 rounded-xl shadow-[0_0_20px_rgba(74,222,128,0.5)] text-xs uppercase tracking-wider transition">
+          CONFIRMAR PEDIDO NO TERMINAL
         </button>
       </form>
     </div>
   </div>
 
   <!-- Modal Comanda -->
-  <div id="modal-sucesso" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-sm rounded-2xl p-6 text-center space-y-4 shadow-2xl">
-      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+  <div id="modal-sucesso" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-cyan-400 w-full max-w-sm rounded-2xl p-6 text-center space-y-4 shadow-[0_0_35px_rgba(6,182,212,0.4)] font-mono">
+      <div class="w-14 h-14 bg-cyan-950 text-cyan-400 rounded-full flex items-center justify-center mx-auto text-3xl border border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.5)]">
         <i class="ph ph-check-circle"></i>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-slate-500">Pedido Confirmado!</h3>
-        <p class="text-xs text-slate-400 mb-2">Mostre o código abaixo na cantina:</p>
-        <div id="res-codigo" class="text-4xl font-extrabold text-emerald-600 font-mono tracking-wider py-2 bg-slate-50 rounded-xl border border-slate-200">--</div>
+        <span class="text-[10px] text-pink-400 font-bold uppercase tracking-widest block">E.E. Prof. Aggeo Pereira do Amaral</span>
+        <h3 class="text-base font-black text-slate-100">PEDIDO CONFIRMADO!</h3>
+        <p class="text-xs text-slate-400 mt-1">Apresente este código no balcão express:</p>
+        <div id="res-codigo" class="text-5xl font-black text-cyan-300 tracking-widest py-3 my-3 bg-slate-950 rounded-xl border border-cyan-500/50 shadow-inner">
+          #P00
+        </div>
       </div>
-      <div id="res-instrucao" class="text-xs text-slate-700 bg-amber-50 p-3 rounded-lg border border-amber-200 text-left leading-relaxed"></div>
-      <button onclick="concluirFluxo()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-sm transition">
-        Fechar / Fazer Novo Pedido
+      <div id="res-instrucao" class="text-xs text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-800 text-left leading-relaxed"></div>
+      <button onclick="concluirFluxo()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-[0_0_15px_rgba(6,182,212,0.4)]">
+        FECHAR / NOVO PEDIDO
       </button>
     </div>
   </div>
@@ -120,23 +200,61 @@
   <script>
     let produtos = [];
     let carrinho = {};
+    let configPix = { pix_chave: '', pix_qrcode: '' };
 
-    async function buscarProdutos() {
+    // Áudio sintetizado via Web Audio API
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function tocarBeep(tipo = 'add') {
       try {
-        const res = await fetch('/api/produtos?apenas_ativos=true');
-        produtos = await res.json();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        if (tipo === 'add') {
+          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.1);
+        } else {
+          osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.1);
+          gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.1);
+        }
+      } catch(e) {}
+    }
+
+    async function carregarDados() {
+      try {
+        const [resProd, resPix] = await Promise.all([
+          fetch('/api/produtos?apenas_ativos=true'),
+          fetch('/api/config/pix')
+        ]);
+        produtos = await resProd.json();
+        configPix = await resPix.json();
+        document.getElementById('lbl-pix-chave').textContent = configPix.pix_chave || 'Chave não cadastrada';
         renderizarProdutos();
       } catch (err) {
-        document.getElementById('lista-produtos').innerHTML = '<p class="text-center text-xs text-red-500 py-8">Erro ao carregar o cardápio.</p>';
+        document.getElementById('lista-produtos').innerHTML = `
+          <div class="text-center py-10 text-rose-400 font-mono text-xs border border-rose-500/20 rounded-xl bg-slate-900">
+            FALHA AO CONECTAR COM A CANTINA. TENTE RECARREGAR.
+          </div>
+        `;
       }
     }
 
     function renderizarProdutos() {
       const container = document.getElementById('lista-produtos');
       container.innerHTML = '';
+      document.getElementById('contador-itens-disponiveis').textContent = `${produtos.length} ITENS ATIVOS`;
 
       if (produtos.length === 0) {
-        container.innerHTML = '<p class="text-center text-xs text-slate-400 py-8">Nenhum item disponível para este momento.</p>';
+        container.innerHTML = '<div class="text-center py-12 text-slate-500 font-mono text-xs">NENHUM LANCHE DISPONÍVEL NESTE TURNO.</div>';
         return;
       }
 
@@ -144,43 +262,64 @@
         const qtd = carrinho[p.id] || 0;
         const esgotado = p.estoque_dia <= 0;
 
-        const item = document.createElement('div');
-        item.className = `bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between ${esgotado ? 'opacity-60 bg-slate-50' : ''}`;
+        const card = document.createElement('div');
+        card.id = `produto-card-${p.id}`;
+        card.className = `cyber-card p-3 rounded-2xl flex items-center justify-between gap-3 transition duration-200 ${esgotado ? 'opacity-50 grayscale' : ''}`;
         
-        item.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-2xl">${p.icone || '🥪'}</div>
-            <div>
-              <h3 class="text-sm font-bold text-slate-800 leading-tight">${p.nome}</h3>
-              <p class="text-xs text-slate-400">${p.descricao || ''}</p>
+        const midiaHtml = p.imagem_url 
+          ? `<img src="${p.imagem_url}" alt="${p.nome}" class="w-16 h-16 rounded-xl object-cover border border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.3)]">`
+          : `<div class="w-16 h-16 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-3xl shadow-inner">${p.icone || '🥪'}</div>`;
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            ${midiaHtml}
+            <div class="min-w-0">
+              <h3 class="text-xs font-bold text-slate-100 truncate">${p.nome}</h3>
+              <p class="text-[11px] text-slate-400 line-clamp-1">${p.descricao || ''}</p>
               <div class="flex items-center gap-2 mt-1">
-                <span class="text-sm font-semibold text-emerald-600">R$ ${p.preco.toFixed(2).replace('.', ',')}</span>
+                <span class="text-xs font-extrabold text-cyan-300 font-mono">R$ ${p.preco.toFixed(2).replace('.', ',')}</span>
                 ${esgotado 
-                  ? '<span class="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">Esgotado</span>' 
-                  : `<span class="text-[10px] font-semibold text-slate-500">${p.estoque_dia} un. disponíveis</span>`
+                  ? '<span class="text-[9px] font-mono font-bold text-rose-400 bg-rose-950/70 border border-rose-500/30 px-1.5 py-0.5 rounded">ESGOTADO</span>'
+                  : `<span class="text-[9px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 px-1.5 py-0.5 rounded">${p.estoque_dia} un. restando</span>`
                 }
               </div>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            ${qtd > 0 ? `<button onclick="alterarQtd(${p.id}, -1)" class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center active:scale-95">-</button><span class="text-sm font-bold w-4 text-center">${qtd}</span>` : ''}
-            <button onclick="alterarQtd(${p.id}, 1)" ${esgotado || qtd >= p.estoque_dia ? 'disabled' : ''} class="w-7 h-7 rounded-full bg-emerald-600 disabled:bg-slate-300 text-white font-bold flex items-center justify-center active:scale-95 shadow-sm">+</button>
+
+          <div class="flex items-center gap-1.5 shrink-0 font-mono">
+            ${qtd > 0 ? `
+              <button onclick="alterarQtd(${p.id}, -1, this)" class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 hover:border-pink-500 text-pink-400 font-bold flex items-center justify-center active:scale-90 transition">
+                <i class="ph ph-minus"></i>
+              </button>
+              <span class="text-xs font-black text-cyan-300 w-5 text-center">${qtd}</span>
+            ` : ''}
+            <button onclick="alterarQtd(${p.id}, 1, this)" ${esgotado || qtd >= p.estoque_dia ? 'disabled' : ''} class="w-8 h-8 rounded-lg bg-gradient-to-r from-cyan-500 to-teal-400 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 text-slate-950 font-black flex items-center justify-center active:scale-90 shadow-[0_0_10px_rgba(6,182,212,0.4)] transition">
+              <i class="ph ph-plus"></i>
+            </button>
           </div>
         `;
-        container.appendChild(item);
+        container.appendChild(card);
       });
     }
 
-    function alterarQtd(id, delta) {
+    function alterarQtd(id, delta, btnElement) {
       const prod = produtos.find(p => p.id === id);
       const atual = carrinho[id] || 0;
+
       if (delta > 0 && atual >= prod.estoque_dia) {
-        alert(`Estoque máximo diário de ${prod.nome} atingido.`);
+        alert(`Estoque diário limite atingido para ${prod.nome}.`);
         return;
       }
 
       carrinho[id] = atual + delta;
       if (carrinho[id] <= 0) delete carrinho[id];
+
+      tocarBeep(delta > 0 ? 'add' : 'del');
+      if (btnElement) {
+        btnElement.classList.add('animate-cyber-pulse');
+        setTimeout(() => btnElement.classList.remove('animate-cyber-pulse'), 250);
+      }
+
       atualizarBarra();
       renderizarProdutos();
     }
@@ -199,8 +338,35 @@
       totalItens > 0 ? barra.classList.remove('translate-y-full') : barra.classList.add('translate-y-full');
     }
 
-    function toggleTroco(exibir) {
-      document.getElementById('campo-troco').style.display = exibir ? 'block' : 'none';
+    function trocarMetodo(metodo) {
+      const isDinheiro = metodo === 'Dinheiro';
+      document.getElementById('campo-troco').style.display = isDinheiro ? 'block' : 'none';
+      const containerPix = document.getElementById('campo-pix');
+      if (!isDinheiro) {
+        containerPix.classList.remove('hidden');
+        renderizarQrCodePix();
+      } else {
+        containerPix.classList.add('hidden');
+      }
+    }
+
+    function renderizarQrCodePix() {
+      const qrBox = document.getElementById('container-qrcode-pix');
+      if (configPix.pix_qrcode) {
+        qrBox.innerHTML = `<img src="${configPix.pix_qrcode}" alt="QR Code Pix" class="w-full h-full object-contain">`;
+      } else {
+        qrBox.innerHTML = `
+          <div class="text-center p-2 text-slate-800">
+            <i class="ph ph-qr-code text-5xl text-pink-600 block mb-1"></i>
+            <p class="text-[10px] font-bold">Pague via chave Pix na retirada</p>
+          </div>
+        `;
+      }
+    }
+
+    function copiarChavePix() {
+      const chave = configPix.pix_chave || 'cantina.aggeo@escola.sp.gov.br';
+      navigator.clipboard.writeText(chave).then(() => alert("Chave Pix copiada!"));
     }
 
     function abrirCheckout() { document.getElementById('modal-checkout').classList.remove('hidden'); }
@@ -227,6 +393,7 @@
 
       const total = itens.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
       btn.disabled = true;
+      btn.textContent = "TRANSMITINDO PEDIDO...";
 
       try {
         const res = await fetch('/api/pedidos', {
@@ -244,27 +411,29 @@
         });
 
         if (!res.ok) {
-          const erro = await res.json();
-          alert(erro.detail || "Erro ao processar pedido.");
-          buscarProdutos();
+          const err = await res.json();
+          alert(err.detail || "Falha na validação.");
+          carregarDados();
           btn.disabled = false;
+          btn.textContent = "CONFIRMAR PEDIDO NO TERMINAL";
           return;
         }
 
-        const dados = await res.json();
+        const data = await res.json();
         fecharCheckout();
 
-        document.getElementById('res-codigo').textContent = dados.codigo_retirada;
+        document.getElementById('res-codigo').textContent = `#${data.codigo_retirada}`;
         const msg = metodo === 'Dinheiro'
           ? `Pagamento de <b>R$ ${total.toFixed(2).replace('.', ',')}</b> em dinheiro no balcão da cantina.`
-          : `Pagamento de <b>R$ ${total.toFixed(2).replace('.', ',')}</b> via Pix direto no balcão da cantina.`;
+          : `Pagamento de <b>R$ ${total.toFixed(2).replace('.', ',')}</b> via Pix registrado no terminal.`;
         document.getElementById('res-instrucao').innerHTML = msg;
         document.getElementById('modal-sucesso').classList.remove('hidden');
 
       } catch (err) {
-        alert("Falha de conexão com o servidor.");
+        alert("Erro de comunicação com o servidor.");
       } finally {
         btn.disabled = false;
+        btn.textContent = "CONFIRMAR PEDIDO NO TERMINAL";
       }
     }
 
@@ -272,10 +441,10 @@
       document.getElementById('modal-sucesso').classList.add('hidden');
       carrinho = {};
       atualizarBarra();
-      buscarProdutos();
+      carregarDados();
     }
 
-    buscarProdutos();
+    carregarDados();
   </script>
 </body>
 </html>

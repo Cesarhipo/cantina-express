@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-app = FastAPI(title="Cantina Express")
+app = FastAPI(title="Cantina Express Cyberpunk - E.E. Prof. Aggeo Pereira do Amaral")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +35,7 @@ def init_db():
                 preco REAL NOT NULL,
                 descricao TEXT,
                 icone TEXT DEFAULT '🥪',
+                imagem_url TEXT DEFAULT '',
                 estoque_dia INTEGER DEFAULT 30,
                 ativo INTEGER DEFAULT 1
             )
@@ -66,8 +67,18 @@ def init_db():
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS configuracoes (
+                chave TEXT PRIMARY KEY,
+                valor TEXT
+            )
+        """)
+
+        # Migrações automáticas de schema
         cursor.execute("PRAGMA table_info(produtos)")
         cols_prod = [c[1] for c in cursor.fetchall()]
+        if "imagem_url" not in cols_prod:
+            cursor.execute("ALTER TABLE produtos ADD COLUMN imagem_url TEXT DEFAULT ''")
         if "estoque_dia" not in cols_prod:
             cursor.execute("ALTER TABLE produtos ADD COLUMN estoque_dia INTEGER DEFAULT 30")
         if "ativo" not in cols_prod:
@@ -80,17 +91,24 @@ def init_db():
         if "turma" not in cols_ped:
             cursor.execute("ALTER TABLE pedidos ADD COLUMN turma TEXT DEFAULT ''")
 
+        # Configurações padrão da escola e Pix
+        cursor.execute("INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES ('escola_nome', 'Escola Estadual Prof. Aggeo Pereira do Amaral')")
+        cursor.execute("INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES ('pix_chave', 'cantina.aggeo@escola.sp.gov.br')")
+        cursor.execute("INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES ('pix_qrcode', '')")
+
+        # Cardápio inicial com imagens padrão
         cursor.execute("SELECT COUNT(*) FROM produtos")
         if cursor.fetchone()[0] == 0:
             iniciais = [
-                ("Pão de Queijo", 4.50, "Tradicional quentinho", "🥖", 30, 1),
-                ("Coxinha de Frango", 6.50, "Com requeijão cremosa", "🍗", 20, 1),
-                ("Enroladinho Presunto/Queijo", 6.00, "Assado na hora", "🥐", 25, 1),
-                ("Suco Natural 300ml", 5.00, "Laranja gelado", "🍊", 40, 1),
-                ("Água Mineral 500ml", 3.00, "Sem gás gelada", "💧", 50, 1),
+                ("Pão de Queijo Tradicional", 4.50, "Quentinho, crocante e queijo da Canastra", "🥖", "https://images.unsplash.com/photo-1598182198871-d3f4ab4fd181?w=400&q=80", 35, 1),
+                ("Coxinha de Frango com Catupiry", 7.00, "Massa dourada crocante com recheio cremoso", "🍗", "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=400&q=80", 25, 1),
+                ("Enroladinho Misto Assado", 6.50, "Presunto especial, muçarela e orégano", "🥐", "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=400&q=80", 25, 1),
+                ("Hambúrguer Artesanal Forno", 9.00, "Carne bovina, queijo cheddar e gergelim", "🍔", "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80", 20, 1),
+                ("Suco Natural 300ml Laranja", 5.50, "100% fruta, bem gelado e sem adição de água", "🍊", "https://images.unsplash.com/photo-1613478223719-2ab802602423?w=400&q=80", 40, 1),
+                ("Água Mineral 500ml", 3.50, "Geladíssima com ou sem gás", "💧", "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=400&q=80", 50, 1)
             ]
             cursor.executemany(
-                "INSERT INTO produtos (nome, preco, descricao, icone, estoque_dia, ativo) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO produtos (nome, preco, descricao, icone, imagem_url, estoque_dia, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 iniciais
             )
         conn.commit()
@@ -118,15 +136,22 @@ class KitchenNotifier:
 
 notifier = KitchenNotifier()
 
-class NovoProdutoRequest(BaseModel):
+# --- Modelos Pydantic ---
+class ProdutoPayload(BaseModel):
     nome: str
     preco: float
     descricao: Optional[str] = ""
     icone: Optional[str] = "🥪"
+    imagem_url: Optional[str] = ""
     estoque_dia: Optional[int] = 30
+    ativo: Optional[int] = 1
 
-class AtualizaEstoqueRequest(BaseModel):
+class AtualizaEstoquePayload(BaseModel):
     estoque_dia: int
+
+class PixConfigPayload(BaseModel):
+    pix_chave: Optional[str] = ""
+    pix_qrcode: Optional[str] = ""
 
 class ItemModel(BaseModel):
     produto_id: int
@@ -143,6 +168,7 @@ class PedidoRequest(BaseModel):
     total: float
     itens: List[ItemModel]
 
+# --- Rotas de Páginas ---
 @app.get("/")
 def pagina_aluno():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
@@ -160,23 +186,71 @@ async def ws_pedidos(ws: WebSocket):
     except WebSocketDisconnect:
         notifier.disconnect(ws)
 
+# --- Configurações de Pix e QR Code ---
+@app.get("/api/config/pix")
+def obter_config_pix():
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT chave, valor FROM configuracoes WHERE chave IN ('pix_chave', 'pix_qrcode', 'escola_nome')")
+        dados = dict(cursor.fetchall())
+        return {
+            "pix_chave": dados.get("pix_chave", ""),
+            "pix_qrcode": dados.get("pix_qrcode", ""),
+            "escola_nome": dados.get("escola_nome", "Escola Estadual Prof. Aggeo Pereira do Amaral")
+        }
+
+@app.post("/api/config/pix")
+def salvar_config_pix(payload: PixConfigPayload):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        if payload.pix_chave is not None:
+            cursor.execute("INSERT OR REPLACE INTO configuracoes (chave, valor) VALUES ('pix_chave', ?)", (payload.pix_chave.strip(),))
+        if payload.pix_qrcode is not None:
+            cursor.execute("INSERT OR REPLACE INTO configuracoes (chave, valor) VALUES ('pix_qrcode', ?)", (payload.pix_qrcode.strip(),))
+        conn.commit()
+    return {"status": "ok"}
+
+# --- Gestão de Produtos ---
 @app.get("/api/produtos")
 def listar_produtos(apenas_ativos: bool = False):
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        query = "SELECT * FROM produtos" + (" WHERE ativo = 1" if apenas_ativos else " ORDER BY nome ASC")
+        query = "SELECT * FROM produtos" + (" WHERE ativo = 1 ORDER BY nome ASC" if apenas_ativos else " ORDER BY ativo DESC, nome ASC")
         cursor.execute(query)
         return [dict(row) for row in cursor.fetchall()]
 
 @app.post("/api/produtos")
-def criar_produto(item: NovoProdutoRequest):
+def criar_produto(item: ProdutoPayload):
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO produtos (nome, preco, descricao, icone, estoque_dia, ativo) VALUES (?, ?, ?, ?, ?, 1)",
-            (item.nome, item.preco, item.descricao, item.icone or "🥪", item.estoque_dia or 30)
+            """INSERT INTO produtos (nome, preco, descricao, icone, imagem_url, estoque_dia, ativo) 
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (item.nome, item.preco, item.descricao, item.icone or "🥪", item.imagem_url or "", item.estoque_dia or 30, item.ativo if item.ativo is not None else 1)
         )
+        conn.commit()
+        novo_id = cursor.lastrowid
+    return {"status": "ok", "id": novo_id}
+
+@app.put("/api/produtos/{prod_id}")
+def editar_produto(prod_id: int, item: ProdutoPayload):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """UPDATE produtos 
+               SET nome = ?, preco = ?, descricao = ?, icone = ?, imagem_url = ?, estoque_dia = ?, ativo = ?
+               WHERE id = ?""",
+            (item.nome, item.preco, item.descricao, item.icone or "🥪", item.imagem_url or "", item.estoque_dia or 0, item.ativo if item.ativo is not None else 1, prod_id)
+        )
+        conn.commit()
+    return {"status": "ok"}
+
+@app.delete("/api/produtos/{prod_id}")
+def deletar_produto(prod_id: int):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM produtos WHERE id = ?", (prod_id,))
         conn.commit()
     return {"status": "ok"}
 
@@ -189,13 +263,14 @@ def alternar_status_produto(prod_id: int):
     return {"status": "ok"}
 
 @app.patch("/api/produtos/{prod_id}/estoque")
-def atualizar_estoque_produto(prod_id: int, dados: AtualizaEstoqueRequest):
+def atualizar_estoque_produto(prod_id: int, dados: AtualizaEstoquePayload):
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute("UPDATE produtos SET estoque_dia = ? WHERE id = ?", (dados.estoque_dia, prod_id))
         conn.commit()
     return {"status": "ok"}
 
+# --- Pedidos ---
 @app.post("/api/pedidos")
 async def criar_pedido(pedido: PedidoRequest):
     order_id = f"P{uuid.uuid4().hex[:3].upper()}"
@@ -294,6 +369,7 @@ def atualizar_status(pedido_id: str, status: str):
         conn.commit()
     return {"status": "ok"}
 
+# --- Relatórios & Demandas ---
 @app.get("/api/relatorios/demanda")
 def obter_dados_demanda():
     with sqlite3.connect(DB_PATH) as conn:
@@ -358,5 +434,5 @@ def baixar_relatorio_csv():
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=demanda_cantina_{datetime.now().strftime('%Y%m%d')}.csv"}
+        headers={"Content-Disposition": f"attachment; filename=demanda_aggeo_{datetime.now().strftime('%Y%m%d')}.csv"}
     )
