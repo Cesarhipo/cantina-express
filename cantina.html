@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cantina - Gestão de Pedidos & Cardápio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 md:p-6 min-h-screen">
+
+  <!-- Top Bar -->
+  <header class="flex flex-wrap items-center justify-between gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+    <div class="flex items-center gap-3">
+      <div class="p-2.5 bg-emerald-600 text-white rounded-lg text-2xl">
+        <i class="ph ph-receipt"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold">Cantina - Gestão & Operação</h1>
+        <p class="text-xs text-slate-500">Controle de estoque, pedidos por intervalo e demanda</p>
+      </div>
+    </div>
+    
+    <div class="flex flex-wrap items-center gap-2">
+      <button onclick="abrirModalEstoque()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition">
+        <i class="ph ph-package text-base"></i> Gerenciar Cardápio/Estoque
+      </button>
+      <button onclick="abrirModalDemanda()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition">
+        <i class="ph ph-chart-line-up text-base"></i> Relatório de Demanda
+      </button>
+      <button onclick="abrirModalProduto()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition">
+        <i class="ph ph-plus-circle text-base"></i> + Novo Item
+      </button>
+    </div>
+  </header>
+
+  <!-- Filtro por Intervalos -->
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+    <div class="flex gap-2 overflow-x-auto bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm">
+      <button onclick="filtrarTurno('todos')" class="turno-btn active px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white">Todos</button>
+      <button onclick="filtrarTurno('Manhã (09:45)')" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100">☀️ Manhã (09:45)</button>
+      <button onclick="filtrarTurno('Tarde (15:15)')" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100">🌤️ Tarde (15:15)</button>
+      <button onclick="filtrarTurno('Noite (20:30)')" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100">🌙 Noite (20:30)</button>
+    </div>
+    <span id="status-conexao" class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Ao Vivo
+    </span>
+  </div>
+
+  <!-- Grade de Pedidos -->
+  <div id="grid-pedidos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+  <!-- Modal 1: Novo Produto -->
+  <div id="modal-produto" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h2 class="text-base font-bold text-slate-800">Novo Produto no Cardápio</h2>
+        <button onclick="fecharModalProduto()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="ph ph-x"></i></button>
+      </div>
+      <form onsubmit="salvarNovoProduto(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Nome do Item</label>
+          <input type="text" id="novo-nome" required placeholder="Ex: Hambúrguer Forno" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-1">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Preço (R$)</label>
+            <input type="number" step="0.50" id="novo-preco" required placeholder="7.50" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+          </div>
+          <div class="col-span-1">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Estoque Dia</label>
+            <input type="number" id="novo-estoque" required value="30" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+          </div>
+          <div class="col-span-1">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Ícone</label>
+            <input type="text" id="novo-icone" value="🍔" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 text-center text-lg outline-none focus:border-emerald-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Descrição</label>
+          <input type="text" id="novo-desc" placeholder="Ex: Com queijo cheddar e carne bovina" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+        </div>
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow text-sm transition">
+          Cadastrar Produto
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Gestão de Cardápio & Estoque Diário -->
+  <div id="modal-estoque" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Controle de Estoque & Disponibilidade</h2>
+          <p class="text-xs text-slate-400">Pause itens esgotados ou atualize a cota diária</p>
+        </div>
+        <button onclick="fecharModalEstoque()" class="text-slate-400 hover:text-slate-600 text-2xl"><i class="ph ph-x"></i></button>
+      </div>
+
+      <div class="overflow-y-auto flex-1 divide-y divide-slate-100" id="lista-gestao-estoque"></div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Relatório de Demanda & Planejamento -->
+  <div id="modal-demanda" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-3xl rounded-2xl p-6 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-start border-b pb-3">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Relatório de Demanda & Planejamento de Cardápio</h2>
+          <p class="text-xs text-slate-500">Métricas consolidadas para decidir o que produzir e estocar</p>
+        </div>
+        <button onclick="fecharModalDemanda()" class="text-slate-400 hover:text-slate-600 text-2xl"><i class="ph ph-x"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl">
+          <span class="text-xs font-semibold text-emerald-700">Total de Itens Vendidos</span>
+          <p id="rep-total-itens" class="text-2xl font-bold text-emerald-900 mt-0.5">0 un.</p>
+        </div>
+        <div class="bg-indigo-50 border border-indigo-200 p-3.5 rounded-xl">
+          <span class="text-xs font-semibold text-indigo-700">Faturamento Acumulado</span>
+          <p id="rep-faturamento" class="text-2xl font-bold text-indigo-900 mt-0.5">R$ 0,00</p>
+        </div>
+      </div>
+
+      <div class="overflow-y-auto flex-1">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 text-slate-600 uppercase font-bold sticky top-0 border-b">
+            <tr>
+              <th class="py-2.5 px-3">Item</th>
+              <th class="py-2.5 px-3 text-center">Unidades</th>
+              <th class="py-2.5 px-3 text-center">% Demanda</th>
+              <th class="py-2.5 px-3 text-right">Faturamento</th>
+            </tr>
+          </thead>
+          <tbody id="rep-tabela-itens" class="divide-y divide-slate-100 font-medium"></tbody>
+        </table>
+      </div>
+
+      <div class="pt-2 border-t flex justify-end">
+        <a href="/api/relatorios/demanda/csv" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow transition">
+          <i class="ph ph-file-csv text-base"></i> Baixar Planilha para Excel (.CSV)
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <audio id="alerta-som" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+  <script>
+    let pedidosCache = [];
+    let turnoAtivo = 'todos';
+
+    const grid = document.getElementById('grid-pedidos');
+    const audio = document.getElementById('alerta-som');
+
+    function abrirModalProduto() { document.getElementById('modal-produto').classList.remove('hidden'); }
+    function fecharModalProduto() { document.getElementById('modal-produto').classList.add('hidden'); }
+
+    function abrirModalEstoque() {
+      carregarGestaoEstoque();
+      document.getElementById('modal-estoque').classList.remove('hidden');
+    }
+    function fecharModalEstoque() { document.getElementById('modal-estoque').classList.add('hidden'); }
+
+    function abrirModalDemanda() {
+      carregarDadosDemanda();
+      document.getElementById('modal-demanda').classList.remove('hidden');
+    }
+    function fecharModalDemanda() { document.getElementById('modal-demanda').classList.add('hidden'); }
+
+    async function salvarNovoProduto(e) {
+      e.preventDefault();
+      const payload = {
+        nome: document.getElementById('novo-nome').value.trim(),
+        preco: parseFloat(document.getElementById('novo-preco').value),
+        descricao: document.getElementById('novo-desc').value.trim(),
+        icone: document.getElementById('novo-icone').value.trim() || '🥪',
+        estoque_dia: parseInt(document.getElementById('novo-estoque').value) || 30
+      };
+
+      await fetch('/api/produtos', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+
+      alert("Produto salvo com sucesso!");
+      e.target.reset();
+      fecharModalProduto();
+    }
+
+    async function carregarGestaoEstoque() {
+      const res = await fetch('/api/produtos');
+      const produtos = await res.json();
+      const container = document.getElementById('lista-gestao-estoque');
+      container.innerHTML = '';
+
+      produtos.forEach(p => {
+        const item = document.createElement('div');
+        item.className = "py-3 flex items-center justify-between gap-4";
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">${p.icone || '🥪'}</span>
+            <div>
+              <p class="text-sm font-bold text-slate-800">${p.nome}</p>
+              <p class="text-xs text-slate-400">R$ ${p.preco.toFixed(2).replace('.', ',')}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1">
+              <span class="text-xs text-slate-500 font-semibold">Estoque:</span>
+              <input type="number" value="${p.estoque_dia}" min="0" onchange="atualizarQtdEstoque(${p.id}, this.value)" class="w-16 text-xs border rounded p-1 text-center font-bold">
+            </div>
+            <button onclick="toggleProduto(${p.id})" class="px-3 py-1 rounded-lg text-xs font-bold transition ${p.ativo ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}">
+              ${p.ativo ? 'Ativo' : 'Pausado'}
+            </button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    async function toggleProduto(id) {
+      await fetch(`/api/produtos/${id}/toggle`, { method: 'PATCH' });
+      carregarGestaoEstoque();
+    }
+
+    async function atualizarQtdEstoque(id, qtd) {
+      await fetch(`/api/produtos/${id}/estoque`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ estoque_dia: parseInt(qtd) || 0 })
+      });
+    }
+
+    async function carregarDadosDemanda() {
+      const res = await fetch('/api/relatorios/demanda');
+      const dados = await res.json();
+
+      document.getElementById('rep-total-itens').textContent = `${dados.resumo.total_itens_vendidos} un.`;
+      document.getElementById('rep-faturamento').textContent = `R$ ${dados.resumo.faturamento_total.toFixed(2).replace('.', ',')}`;
+
+      const tbody = document.getElementById('rep-tabela-itens');
+      tbody.innerHTML = '';
+
+      if (dados.itens.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-slate-400">Nenhum pedido finalizado ainda.</td></tr>';
+        return;
+      }
+
+      dados.itens.forEach((it, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-center font-bold text-[10px] leading-5">${idx + 1}</span>
+            <span class="font-bold text-slate-800">${it.nome}</span>
+          </td>
+          <td class="py-2.5 px-3 text-center font-bold text-slate-700">${it.total_unidades}</td>
+          <td class="py-2.5 px-3 text-center">
+            <div class="inline-flex items-center gap-1.5">
+              <span class="font-semibold text-slate-600">${it.participacao_pct}%</span>
+              <div class="w-12 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-indigo-600 h-full" style="width: ${it.participacao_pct}%"></div>
+              </div>
+            </div>
+          </td>
+          <td class="py-2.5 px-3 text-right font-bold text-emerald-700">R$ ${it.receita_total.toFixed(2).replace('.', ',')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filtrarTurno(turno) {
+      turnoAtivo = turno;
+      document.querySelectorAll('.turno-btn').forEach(btn => {
+        btn.className = "turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100";
+      });
+      event.target.className = "turno-btn active px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white";
+      renderizarCards();
+    }
+
+    async function carregarPedidos() {
+      const res = await fetch('/api/pedidos/ativos');
+      pedidosCache = await res.json();
+      renderizarCards();
+    }
+
+    function renderizarCards() {
+      grid.innerHTML = '';
+      const filtrados = turnoAtivo === 'todos' 
+        ? pedidosCache 
+        : pedidosCache.filter(p => p.intervalo === turnoAtivo);
+
+      if (filtrados.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 text-xs">Nenhum pedido aberto neste intervalo.</div>';
+        return;
+      }
+
+      filtrados.forEach(p => {
+        const isDinheiro = p.metodo_pagamento === 'Dinheiro';
+        const precisaTroco = isDinheiro && p.troco_para > p.total;
+        const valorTroco = precisaTroco ? (p.troco_para - p.total).toFixed(2).replace('.', ',') : 0;
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-xl shadow-sm border-2 border-slate-200 p-4 flex flex-col justify-between transition hover:shadow-md";
+
+        const itensHtml = p.itens.map(i => `
+          <li class="flex justify-between items-center py-1 text-xs border-b border-slate-50">
+            <span class="font-bold text-slate-700">${i.qtd}x ${i.nome}</span>
+            <span class="text-slate-400">R$ ${(i.preco * i.qtd).toFixed(2).replace('.', ',')}</span>
+          </li>
+        `).join('');
+
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="text-xs font-mono font-extrabold bg-slate-900 text-white px-2 py-0.5 rounded">#${p.id}</span>
+                <span class="text-xs text-slate-400 ml-1">${p.horario}</span>
+              </div>
+              <span class="text-xs font-bold px-2 py-0.5 rounded ${p.status.includes('Pronto') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${p.status}
+              </span>
+            </div>
+
+            <h3 class="font-bold text-base text-slate-900 leading-snug">${p.aluno_nome}</h3>
+            <div class="flex items-center gap-2 mb-2 text-xs font-semibold">
+              <span class="text-slate-500">${p.turma}</span>
+              <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">${p.intervalo}</span>
+            </div>
+
+            <div class="mb-3 p-2 rounded-lg text-xs font-semibold ${isDinheiro ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-blue-50 text-blue-900 border border-blue-200'}">
+              <span>Pagamento: <b>${p.metodo_pagamento}</b></span>
+              ${precisaTroco ? `<p class="mt-0.5 text-amber-700 font-bold">⚠️ Troco: R$ ${valorTroco} (paga com R$ ${p.troco_para.toFixed(2).replace('.', ',')})</p>` : ''}
+            </div>
+
+            <ul class="mb-4 bg-slate-50 p-2.5 rounded-lg border border-slate-100">${itensHtml}</ul>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center text-sm font-bold text-slate-800 mb-3">
+              <span>A Cobrar:</span>
+              <span class="text-emerald-700 text-lg">R$ ${p.total.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="mudarStatus('${p.id}', 'Pronto para Retirada')" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 rounded-lg transition">Pronto</button>
+              <button onclick="mudarStatus('${p.id}', 'Entregue')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-lg transition">Entregar</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function mudarStatus(id, novoStatus) {
+      await fetch(`/api/pedidos/${id}/status?status=${encodeURIComponent(novoStatus)}`, { method: 'PATCH' });
+      if (novoStatus === 'Entregue') {
+        pedidosCache = pedidosCache.filter(p => p.id !== id);
+      } else {
+        const ped = pedidosCache.find(p => p.id === id);
+        if (ped) ped.status = novoStatus;
+      }
+      renderizarCards();
+    }
+
+    function conectarWS() {
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${proto}//${window.location.host}/ws/pedidos`);
+
+      ws.onmessage = (event) => {
+        const novoPedido = JSON.parse(event.data);
+        pedidosCache.unshift(novoPedido);
+        renderizarCards();
+        try { audio.play(); } catch(e) {}
+      };
+
+      ws.onclose = () => setTimeout(conectarWS, 3000);
+    }
+
+    carregarPedidos();
+    conectarWS();
+  </script>
+</body>
+</html>

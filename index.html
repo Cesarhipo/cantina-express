@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cantina Express - Pedidos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <meta name="theme-color" content="#16a34a">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased pb-28 select-none">
+
+  <!-- Top Bar -->
+  <header class="sticky top-0 z-30 bg-emerald-600 text-white shadow px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <i class="ph ph-fork-knife text-2xl"></i>
+      <div>
+        <h1 class="font-bold text-base leading-tight">Cantina Express</h1>
+        <p class="text-xs text-emerald-100">Antecipe seu pedido para o intervalo!</p>
+      </div>
+    </div>
+    <span class="inline-flex items-center gap-1 bg-emerald-700/60 px-2.5 py-1 rounded-full text-xs font-medium">
+      <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span> Aberto
+    </span>
+  </header>
+
+  <!-- Lista de Lanches Dinâmica -->
+  <main class="max-w-md mx-auto p-4">
+    <div id="lista-produtos" class="grid grid-cols-1 gap-3">
+      <p class="text-center text-xs text-slate-400 py-8">Carregando cardápio...</p>
+    </div>
+  </main>
+
+  <!-- Barra Inferior Fixa do Carrinho -->
+  <footer id="barra-carrinho" class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-4 shadow-xl z-20 transition-transform duration-300 translate-y-full">
+    <div class="max-w-md mx-auto flex items-center justify-between">
+      <div>
+        <p class="text-xs text-slate-500 font-medium">Total do Pedido</p>
+        <p id="total-valor" class="text-lg font-bold text-slate-800">R$ 0,00</p>
+      </div>
+      <button onclick="abrirCheckout()" class="bg-emerald-600 active:bg-emerald-700 text-white font-semibold text-sm px-6 py-2.5 rounded-xl shadow-md flex items-center gap-2">
+        Avançar <i class="ph ph-arrow-right font-bold"></i>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Modal Checkout -->
+  <div id="modal-checkout" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h2 class="text-base font-bold text-slate-800">Dados da Retirada</h2>
+        <button onclick="fecharCheckout()" class="text-slate-400 hover:text-slate-600 text-xl"><i class="ph ph-x"></i></button>
+      </div>
+
+      <form onsubmit="finalizarPedido(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Seu Nome Completo</label>
+          <input type="text" id="aluno-nome" required placeholder="Ex: Gabriel Alves" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Turma / Série</label>
+            <input type="text" id="aluno-turma" required placeholder="Ex: 3º B" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Intervalo de Retirada</label>
+            <select id="horario-retirada" required class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500 bg-white">
+              <option value="Manhã (09:45)">Manhã (09:45)</option>
+              <option value="Tarde (15:15)">Tarde (15:15)</option>
+              <option value="Noite (20:30)">Noite (20:30)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Forma de Pagamento</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="border p-2.5 rounded-lg flex items-center gap-2 cursor-pointer has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+              <input type="radio" name="pagamento" value="Dinheiro" checked onchange="toggleTroco(true)" class="accent-emerald-600">
+              <span class="text-xs font-bold text-slate-700">💵 Dinheiro</span>
+            </label>
+            <label class="border p-2.5 rounded-lg flex items-center gap-2 cursor-pointer has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+              <input type="radio" name="pagamento" value="Pix" onchange="toggleTroco(false)" class="accent-emerald-600">
+              <span class="text-xs font-bold text-slate-700">⚡ Pix</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="campo-troco">
+          <label class="block text-xs font-bold text-slate-600 mb-1">Troco para quanto? (Opcional)</label>
+          <input type="number" step="0.50" id="troco-para" placeholder="Ex: 20.00" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 outline-none focus:border-emerald-500">
+        </div>
+
+        <button type="submit" id="btn-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg transition">
+          Confirmar Pedido
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Comanda -->
+  <div id="modal-sucesso" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-2xl p-6 text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+        <i class="ph ph-check-circle"></i>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-slate-500">Pedido Confirmado!</h3>
+        <p class="text-xs text-slate-400 mb-2">Mostre o código abaixo na cantina:</p>
+        <div id="res-codigo" class="text-4xl font-extrabold text-emerald-600 font-mono tracking-wider py-2 bg-slate-50 rounded-xl border border-slate-200">--</div>
+      </div>
+      <div id="res-instrucao" class="text-xs text-slate-700 bg-amber-50 p-3 rounded-lg border border-amber-200 text-left leading-relaxed"></div>
+      <button onclick="concluirFluxo()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-sm transition">
+        Fechar / Fazer Novo Pedido
+      </button>
+    </div>
+  </div>
+
+  <script>
+    let produtos = [];
+    let carrinho = {};
+
+    async function buscarProdutos() {
+      try {
+        const res = await fetch('/api/produtos?apenas_ativos=true');
+        produtos = await res.json();
+        renderizarProdutos();
+      } catch (err) {
+        document.getElementById('lista-produtos').innerHTML = '<p class="text-center text-xs text-red-500 py-8">Erro ao carregar o cardápio.</p>';
+      }
+    }
+
+    function renderizarProdutos() {
+      const container = document.getElementById('lista-produtos');
+      container.innerHTML = '';
+
+      if (produtos.length === 0) {
+        container.innerHTML = '<p class="text-center text-xs text-slate-400 py-8">Nenhum item disponível para este momento.</p>';
+        return;
+      }
+
+      produtos.forEach(p => {
+        const qtd = carrinho[p.id] || 0;
+        const esgotado = p.estoque_dia <= 0;
+
+        const item = document.createElement('div');
+        item.className = `bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between ${esgotado ? 'opacity-60 bg-slate-50' : ''}`;
+        
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-2xl">${p.icone || '🥪'}</div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-800 leading-tight">${p.nome}</h3>
+              <p class="text-xs text-slate-400">${p.descricao || ''}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-sm font-semibold text-emerald-600">R$ ${p.preco.toFixed(2).replace('.', ',')}</span>
+                ${esgotado 
+                  ? '<span class="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">Esgotado</span>' 
+                  : `<span class="text-[10px] font-semibold text-slate-500">${p.estoque_dia} un. disponíveis</span>`
+                }
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            ${qtd > 0 ? `<button onclick="alterarQtd(${p.id}, -1)" class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center active:scale-95">-</button><span class="text-sm font-bold w-4 text-center">${qtd}</span>` : ''}
+            <button onclick="alterarQtd(${p.id}, 1)" ${esgotado || qtd >= p.estoque_dia ? 'disabled' : ''} class="w-7 h-7 rounded-full bg-emerald-600 disabled:bg-slate-300 text-white font-bold flex items-center justify-center active:scale-95 shadow-sm">+</button>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function alterarQtd(id, delta) {
+      const prod = produtos.find(p => p.id === id);
+      const atual = carrinho[id] || 0;
+      if (delta > 0 && atual >= prod.estoque_dia) {
+        alert(`Estoque máximo diário de ${prod.nome} atingido.`);
+        return;
+      }
+
+      carrinho[id] = atual + delta;
+      if (carrinho[id] <= 0) delete carrinho[id];
+      atualizarBarra();
+      renderizarProdutos();
+    }
+
+    function atualizarBarra() {
+      const barra = document.getElementById('barra-carrinho');
+      let total = 0, totalItens = 0;
+      for (const id in carrinho) {
+        const p = produtos.find(item => item.id == id);
+        if (p) {
+          total += p.preco * carrinho[id];
+          totalItens += carrinho[id];
+        }
+      }
+      document.getElementById('total-valor').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+      totalItens > 0 ? barra.classList.remove('translate-y-full') : barra.classList.add('translate-y-full');
+    }
+
+    function toggleTroco(exibir) {
+      document.getElementById('campo-troco').style.display = exibir ? 'block' : 'none';
+    }
+
+    function abrirCheckout() { document.getElementById('modal-checkout').classList.remove('hidden'); }
+    function fecharCheckout() { document.getElementById('modal-checkout').classList.add('hidden'); }
+
+    async function finalizarPedido(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit');
+      const nome = document.getElementById('aluno-nome').value.trim();
+      const turma = document.getElementById('aluno-turma').value.trim();
+      const horario = document.getElementById('horario-retirada').value;
+      const metodo = document.querySelector('input[name="pagamento"]:checked').value;
+      const trocoInput = parseFloat(document.getElementById('troco-para').value) || 0.0;
+
+      const itens = Object.keys(carrinho).map(id => {
+        const p = produtos.find(item => item.id == id);
+        return {
+          produto_id: parseInt(p.id),
+          nome: p.nome,
+          qtd: parseInt(carrinho[id]),
+          preco: parseFloat(p.preco)
+        };
+      });
+
+      const total = itens.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/pedidos', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            aluno_nome: nome,
+            turma: turma,
+            intervalo: horario,
+            metodo_pagamento: metodo,
+            troco_para: trocoInput,
+            total: total,
+            itens: itens
+          })
+        });
+
+        if (!res.ok) {
+          const erro = await res.json();
+          alert(erro.detail || "Erro ao processar pedido.");
+          buscarProdutos();
+          btn.disabled = false;
+          return;
+        }
+
+        const dados = await res.json();
+        fecharCheckout();
+
+        document.getElementById('res-codigo').textContent = dados.codigo_retirada;
+        const msg = metodo === 'Dinheiro'
+          ? `Pagamento de <b>R$ ${total.toFixed(2).replace('.', ',')}</b> em dinheiro no balcão da cantina.`
+          : `Pagamento de <b>R$ ${total.toFixed(2).replace('.', ',')}</b> via Pix direto no balcão da cantina.`;
+        document.getElementById('res-instrucao').innerHTML = msg;
+        document.getElementById('modal-sucesso').classList.remove('hidden');
+
+      } catch (err) {
+        alert("Falha de conexão com o servidor.");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function concluirFluxo() {
+      document.getElementById('modal-sucesso').classList.add('hidden');
+      carrinho = {};
+      atualizarBarra();
+      buscarProdutos();
+    }
+
+    buscarProdutos();
+  </script>
+</body>
+</html>
