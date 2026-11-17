@@ -31,8 +31,11 @@
   <!-- Top Bar -->
   <header class="flex flex-wrap items-center justify-between gap-4 mb-6 cyber-panel p-4 md:p-5 rounded-2xl shadow-[0_4px_25px_rgba(6,182,212,0.15)] border-cyan-500/30">
     <div class="flex items-center gap-3.5">
-      <div class="p-3 bg-gradient-to-br from-cyan-500 to-fuchsia-600 rounded-xl text-slate-950 text-2xl font-black shadow-[0_0_15px_rgba(6,182,212,0.5)]">
-        <i class="ph ph-terminal-window"></i>
+      <div id="box-logo-cantina" class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-fuchsia-600 p-0.5 shadow-[0_0_15px_rgba(6,182,212,0.5)] flex items-center justify-center overflow-hidden">
+        <div id="fallback-logo-cantina" class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center text-cyan-400 text-2xl font-black">
+          <i class="ph ph-terminal-window"></i>
+        </div>
+        <img id="img-logo-cantina" src="" alt="Logo" class="hidden w-full h-full object-cover rounded-[10px]">
       </div>
       <div>
         <span class="text-[11px] font-mono font-bold tracking-widest text-pink-400 uppercase block">
@@ -41,18 +44,22 @@
         <h1 class="text-lg md:text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-pink-400">
           TERMINAL DA CANTINA // OPS CONTROL
         </h1>
-        <p class="text-xs text-slate-400 font-mono">Gestão em tempo real de pedidos, cardápio, estoque e Pix</p>
+        <p class="text-xs text-slate-400 font-mono">Exibição automática de pedidos Pix confirmados • Intervalos 16:10 e 18:50</p>
       </div>
     </div>
     
+    <!-- Botões de Ação -->
     <div class="flex flex-wrap items-center gap-2.5 font-mono">
-      <button onclick="abrirModalEstoque()" class="cyber-btn bg-slate-900 border border-slate-700 hover:border-cyan-400 text-cyan-300 text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+      <button onclick="abrirModalLogo()" class="cyber-btn bg-slate-900 border border-slate-700 hover:border-cyan-400 text-cyan-300 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+        <i class="ph ph-image text-base"></i> Logo da Escola
+      </button>
+      <button onclick="abrirModalEstoque()" class="cyber-btn bg-slate-900 border border-slate-700 hover:border-cyan-400 text-cyan-300 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm">
         <i class="ph ph-package text-base"></i> Gerenciar Cardápio
       </button>
-      <button onclick="abrirModalPix()" class="cyber-btn bg-pink-950/80 border border-pink-500/50 hover:border-pink-400 text-pink-300 text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-[0_0_10px_rgba(236,72,153,0.25)]">
-        <i class="ph ph-qr-code text-base"></i> QR Code do Pix
+      <button onclick="abrirModalPix()" class="cyber-btn bg-pink-950/80 border border-pink-500/50 hover:border-pink-400 text-pink-300 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center gap-1.5 shadow-[0_0_10px_rgba(236,72,153,0.25)]">
+        <i class="ph ph-qr-code text-base"></i> Configurar Pix
       </button>
-      <button onclick="abrirModalDemanda()" class="cyber-btn bg-indigo-950/80 border border-indigo-500/50 hover:border-indigo-400 text-indigo-300 text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 shadow-[0_0_10px_rgba(99,102,241,0.25)]">
+      <button onclick="abrirModalDemanda()" class="cyber-btn bg-indigo-950/80 border border-indigo-500/50 hover:border-indigo-400 text-indigo-300 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center gap-1.5 shadow-[0_0_10px_rgba(99,102,241,0.25)]">
         <i class="ph ph-chart-line-up text-base"></i> Relatórios & Gráficos
       </button>
       <button onclick="abrirModalNovoProduto()" class="cyber-btn bg-gradient-to-r from-cyan-500 to-emerald-400 text-slate-950 text-xs font-black px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.5)]">
@@ -61,20 +68,16 @@
     </div>
   </header>
 
-  <!-- Filtros por Intervalo -->
-  <div class="flex items-center justify-between flex-wrap gap-3 mb-6 font-mono">
-    <div class="flex gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800 shadow-inner">
-      <button onclick="filtrarTurno('todos')" class="turno-btn active px-3.5 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]">
-        TODOS OS TURNOS
+  <!-- Abas Principais: Pedidos Ativos Pagos vs Histórico de Entregues -->
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-5 font-mono">
+    <div class="flex gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+      <button id="tab-ativos" onclick="alternarAbaPrincipal('ativos')" class="px-4 py-2 rounded-lg text-xs font-black bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(52,211,153,0.4)] flex items-center gap-1.5 transition">
+        <i class="ph ph-check-circle text-base"></i> PEDIDOS PAGOS (ATIVOS)
+        <span id="badge-qtd-ativos" class="bg-slate-950 text-emerald-400 px-1.5 py-0.2 rounded text-[10px]">0</span>
       </button>
-      <button onclick="filtrarTurno('Manhã (09:45)')" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 hover:bg-slate-800">
-        ☀️ MANHÃ (09:45)
-      </button>
-      <button onclick="filtrarTurno('Tarde (15:15)')" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 hover:bg-slate-800">
-        🌤️ TARDE (15:15)
-      </button>
-      <button onclick="filtrarTurno('Noite (20:30)')" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 hover:bg-slate-800">
-        🌙 NOITE (20:30)
+      <button id="tab-historico" onclick="alternarAbaPrincipal('historico')" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1.5 transition">
+        <i class="ph ph-clock-counter-clockwise text-base"></i> HISTÓRICO DE ENTREGUES
+        <span id="badge-qtd-historico" class="bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded text-[10px]">0</span>
       </button>
     </div>
 
@@ -88,10 +91,87 @@
     </div>
   </div>
 
-  <!-- Grade de Pedidos -->
-  <div id="grid-pedidos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-    <div class="col-span-full py-16 text-center text-slate-500 font-mono text-xs">
-      AGUARDANDO PEDIDOS DOS ALUNOS...
+  <!-- SEÇÃO 1: PEDIDOS PAGOS (ATIVOS) -->
+  <div id="secao-pedidos-ativos">
+    <div class="flex gap-2 bg-slate-900/70 p-1.5 rounded-xl border border-slate-800 mb-5 w-fit font-mono">
+      <button onclick="filtrarTurno('todos', this)" class="turno-btn active px-3.5 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]">
+        TODOS OS INTERVALOS
+      </button>
+      <button onclick="filtrarTurno('16:10', this)" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 hover:bg-slate-800">
+        ☀️ 1º INTERVALO (16:10)
+      </button>
+      <button onclick="filtrarTurno('18:50', this)" class="turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-pink-300 hover:bg-slate-800">
+        🌙 2º INTERVALO (18:50)
+      </button>
+    </div>
+
+    <div id="grid-pedidos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div class="col-span-full py-16 text-center text-slate-500 font-mono text-xs">
+        AGUARDANDO PAGAMENTOS PIX CONFIRMADOS...
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2: HISTÓRICO DE PEDIDOS ENTREGUES -->
+  <div id="secao-pedidos-historico" class="hidden space-y-4 font-mono">
+    <div class="cyber-panel p-4 rounded-2xl border-cyan-500/30 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-sm font-black text-cyan-300 uppercase">Arquivo de Pedidos Concluídos e Entregues</h2>
+        <p class="text-[11px] text-slate-400">Registro completo de retiradas finalizadas na cantina</p>
+      </div>
+      <input type="text" id="busca-historico" oninput="renderizarHistorico()" placeholder="Buscar por código, nome ou turma..." class="bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 outline-none focus:border-cyan-400 w-full sm:w-72">
+    </div>
+
+    <div class="cyber-panel rounded-2xl overflow-hidden border-slate-800">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950 text-slate-400 uppercase font-bold border-b border-slate-800">
+            <tr>
+              <th class="py-3 px-4">Código</th>
+              <th class="py-3 px-4">Cliente / Perfil</th>
+              <th class="py-3 px-4">Turma / Sala</th>
+              <th class="py-3 px-4">Intervalo</th>
+              <th class="py-3 px-4">Itens Entregues</th>
+              <th class="py-3 px-4 text-right">Valor Pago</th>
+              <th class="py-3 px-4 text-right">Entregue em</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-historico-body" class="divide-y divide-slate-800/80"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Upload do Logo da Escola -->
+  <div id="modal-logo" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 font-mono">
+    <div class="bg-slate-900 border border-cyan-500/50 w-full max-w-md rounded-2xl p-6 shadow-[0_0_35px_rgba(6,182,212,0.3)] space-y-4 text-xs">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <span class="text-[10px] text-pink-400 font-bold uppercase">Identidade Visual Escolar</span>
+          <h2 class="text-base font-black text-cyan-300">LOGOTIPO DA ESCOLA</h2>
+        </div>
+        <button onclick="fecharModalLogo()" class="text-slate-400 hover:text-pink-400 text-2xl"><i class="ph ph-x"></i></button>
+      </div>
+
+      <div class="space-y-3.5">
+        <div class="border-2 border-dashed border-slate-700 hover:border-cyan-400 rounded-xl p-5 text-center bg-slate-950 transition cursor-pointer" onclick="document.getElementById('file-escola-logo').click()">
+          <input type="file" id="file-escola-logo" accept="image/*" class="hidden" onchange="processarArquivoLogo(this)">
+          <i class="ph ph-cloud-arrow-up text-4xl text-cyan-400 mb-1 block"></i>
+          <span class="text-slate-300 font-bold block text-[11px]">Selecionar imagem do Logotipo</span>
+          <span class="text-[10px] text-slate-500">Formatos: PNG, JPG, SVG ou WebP</span>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+          <span class="text-[10px] text-slate-400 mb-2 uppercase">Visualização Atual:</span>
+          <div id="box-preview-logo" class="w-24 h-24 bg-slate-900 rounded-xl flex items-center justify-center border border-slate-700 overflow-hidden shadow-inner">
+            <span class="text-slate-500 text-[10px]">Sem logo</span>
+          </div>
+        </div>
+
+        <button onclick="salvarLogoEscola()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black py-3 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.5)] text-xs uppercase tracking-wider transition">
+          SALVAR LOGOTIPO OFICIAL
+        </button>
+      </div>
     </div>
   </div>
 
@@ -119,10 +199,9 @@
     </div>
   </div>
 
-  <!-- Modal: Formulário Novo / Editar Produto com Repositório -->
+  <!-- Modal: Formulário Novo / Editar Produto -->
   <div id="modal-produto-form" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-cyan-500/50 w-full max-w-xl rounded-2xl p-6 shadow-[0_0_40px_rgba(6,182,212,0.4)] space-y-4 max-h-[92vh] overflow-y-auto font-mono">
-      
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div>
           <span class="text-[10px] text-pink-400 uppercase font-bold tracking-wider">Terminal do Cardápio</span>
@@ -161,11 +240,9 @@
 
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
           <div class="flex justify-between items-center">
-            <label class="block text-slate-300 font-bold uppercase text-[11px]">
-              Banco de Imagens (Clique para associar ao item)
-            </label>
+            <label class="block text-slate-300 font-bold uppercase text-[11px]">Banco de Imagens</label>
             <label class="text-[10px] text-cyan-400 cursor-pointer hover:underline flex items-center gap-1">
-              <i class="ph ph-upload-simple"></i> Foto do PC
+              <i class="ph ph-upload-simple"></i> Foto do Computador
               <input type="file" accept="image/*" class="hidden" onchange="uploadFotoComputador(this)">
             </label>
           </div>
@@ -173,7 +250,7 @@
         </div>
 
         <div>
-          <label class="block text-slate-300 font-bold uppercase mb-1">URL da Imagem Selecionada</label>
+          <label class="block text-slate-300 font-bold uppercase mb-1">URL da Imagem</label>
           <input type="text" id="form-img-url" placeholder="https://..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-[11px] text-cyan-300 outline-none focus:border-cyan-400">
         </div>
 
@@ -184,55 +261,60 @@
     </div>
   </div>
 
-  <!-- Modal: Pix & Upload de QR Code -->
+  <!-- Modal: Configuração Pix & Gateway Automático -->
   <div id="modal-pix" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 font-mono">
     <div class="bg-slate-900 border border-pink-500/50 w-full max-w-md rounded-2xl p-6 shadow-[0_0_35px_rgba(236,72,153,0.3)] space-y-4 text-xs">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div>
-          <span class="text-[10px] text-pink-400 font-bold uppercase">Aggeo Pereira do Amaral</span>
-          <h2 class="text-base font-black text-pink-300">CONFIGURAÇÃO DE PIX // QR CODE</h2>
+          <span class="text-[10px] text-pink-400 font-bold uppercase">Integração Pix Dinâmico</span>
+          <h2 class="text-base font-black text-pink-300">CONFIGURAÇÃO PIX & GATEWAY</h2>
         </div>
         <button onclick="fecharModalPix()" class="text-slate-400 hover:text-pink-400 text-2xl"><i class="ph ph-x"></i></button>
       </div>
 
-      <form onsubmit="salvarConfiguracaoPix(event)" class="space-y-3.5">
+      <form onsubmit="salvarConfiguracaoPix(event)" class="space-y-3">
         <div>
-          <label class="block text-slate-300 font-bold uppercase mb-1">Chave Pix da Cantina</label>
-          <input type="text" id="pix-chave-input" required placeholder="CNPJ, E-mail ou Telefone" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 outline-none focus:border-pink-500">
+          <label class="block text-slate-300 font-bold uppercase mb-1">Chave Pix Recebedora (BR Code EMV)</label>
+          <input type="text" id="pix-chave-input" required placeholder="CNPJ, E-mail, CPF ou Chave Aleatória" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-slate-100 outline-none focus:border-pink-500">
         </div>
 
-        <div>
-          <label class="block text-slate-300 font-bold uppercase mb-1">Upload da Imagem do QR Code Pix</label>
-          <div class="border-2 border-dashed border-slate-700 hover:border-pink-500 rounded-xl p-4 text-center bg-slate-950 transition cursor-pointer" onclick="document.getElementById('file-pix-qr').click()">
-            <input type="file" id="file-pix-qr" accept="image/*" class="hidden" onchange="processarArquivoQrCode(this)">
-            <i class="ph ph-qr-code text-4xl text-pink-400 mb-1 block"></i>
-            <span class="text-slate-300 font-bold block text-[11px]">Clique para selecionar foto do QR Code</span>
-            <span class="text-[10px] text-slate-500">Formatos aceitos: PNG, JPG ou WebP</span>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-slate-300 font-bold uppercase mb-1">Nome Recebedor</label>
+            <input type="text" id="pix-recebedor-input" maxlength="25" required value="CANTINA AGGEO" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-100 outline-none focus:border-pink-500">
+          </div>
+          <div>
+            <label class="block text-slate-300 font-bold uppercase mb-1">Cidade</label>
+            <input type="text" id="pix-cidade-input" maxlength="15" required value="SOROCABA" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-slate-100 outline-none focus:border-pink-500">
           </div>
         </div>
 
-        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
-          <span class="text-[10px] text-slate-400 mb-2 uppercase">Pré-visualização para o Aluno:</span>
-          <div id="box-preview-qr" class="w-40 h-40 bg-white rounded-lg flex items-center justify-center p-1.5 shadow-inner">
-            <span class="text-slate-400 text-[10px]">Sem imagem de QR Code</span>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="block text-cyan-300 font-bold uppercase text-[10px]">Token Mercado Pago (Opcional - Confirmação Real)</label>
+            <span id="badge-mp-status" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Modo EMV Direto</span>
           </div>
+          <input type="password" id="mp-token-input" placeholder="APP_USR-0000000000000000-..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-400">
+          <p class="text-[10px] text-slate-400 leading-relaxed">
+            Com o Access Token preenchido, o sistema gera a cobrança na API do Mercado Pago e confirma o pagamento bancário 100% sozinho.
+          </p>
         </div>
 
         <button type="submit" class="w-full bg-pink-500 hover:bg-pink-400 text-slate-950 font-black py-3 rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.5)] text-xs uppercase tracking-wider transition">
-          ATUALIZAR QR CODE NO APP DO ALUNO
+          SALVAR CONFIGURAÇÕES PIX
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Modal: Relatório com Gráficos Chart.js -->
+  <!-- Modal: Relatórios com Gráficos Chart.js e Botão Zerar Dados -->
   <div id="modal-demanda" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4 font-mono">
     <div class="bg-slate-900 border border-cyan-500/40 w-full max-w-4xl rounded-2xl p-6 shadow-[0_0_40px_rgba(6,182,212,0.35)] space-y-4 max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-start border-b border-slate-800 pb-3">
         <div>
           <span class="text-[10px] text-pink-400 font-bold uppercase tracking-widest">Escola Estadual Prof. Aggeo Pereira do Amaral</span>
           <h2 class="text-base md:text-lg font-black text-cyan-300">RELATÓRIO DE DEMANDA // ANÁLISE GRÁFICA</h2>
-          <p class="text-[11px] text-slate-400">Inteligência de vendas para planejar produção diária e compras</p>
+          <p class="text-[11px] text-slate-400">Estatísticas baseadas exclusivamente em pedidos Pix confirmados</p>
         </div>
         <button onclick="fecharModalDemanda()" class="text-slate-400 hover:text-pink-400 text-2xl"><i class="ph ph-x"></i></button>
       </div>
@@ -243,31 +325,31 @@
           <p id="rep-total-itens" class="text-xl font-black text-slate-100 mt-0.5">0 un.</p>
         </div>
         <div class="bg-slate-950 border border-pink-500/30 p-3 rounded-xl">
-          <span class="text-[10px] font-bold text-pink-400 uppercase">Receita Total</span>
+          <span class="text-[10px] font-bold text-pink-400 uppercase">Receita Confirmada</span>
           <p id="rep-faturamento" class="text-xl font-black text-pink-300 mt-0.5">R$ 0,00</p>
         </div>
         <div class="col-span-2 sm:col-span-1 bg-slate-950 border border-emerald-500/30 p-3 rounded-xl">
-          <span class="text-[10px] font-bold text-emerald-400 uppercase">Status Cantina</span>
-          <p class="text-xl font-black text-emerald-400 mt-0.5">ESTOQUE ATIVO</p>
+          <span class="text-[10px] font-bold text-emerald-400 uppercase">Status Auditoria</span>
+          <p class="text-xl font-black text-emerald-400 mt-0.5">100% PIX PAGO</p>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
           <span class="text-[10px] text-cyan-400 uppercase font-bold block mb-2 text-center">Top Itens Mais Pedidos (Unidades)</span>
-          <div class="h-48">
+          <div class="h-44">
             <canvas id="graficoItens"></canvas>
           </div>
         </div>
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-          <span class="text-[10px] text-pink-400 uppercase font-bold block mb-2 text-center">Demanda por Intervalo (Turnos)</span>
-          <div class="h-48 flex items-center justify-center">
+          <span class="text-[10px] text-pink-400 uppercase font-bold block mb-2 text-center">Demanda por Intervalo (16:10 vs 18:50)</span>
+          <div class="h-44 flex items-center justify-center">
             <canvas id="graficoTurnos"></canvas>
           </div>
         </div>
       </div>
 
-      <div class="overflow-y-auto flex-1 max-h-40 border border-slate-800 rounded-xl">
+      <div class="overflow-y-auto flex-1 max-h-36 border border-slate-800 rounded-xl">
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-950 text-slate-400 uppercase font-bold sticky top-0 border-b border-slate-800">
             <tr>
@@ -281,7 +363,12 @@
         </table>
       </div>
 
-      <div class="pt-2 border-t border-slate-800 flex justify-end">
+      <!-- Rodapé do Relatório: Zerar Dados + Exportar Excel -->
+      <div class="pt-3 border-t border-slate-800 flex flex-wrap justify-between items-center gap-3">
+        <button onclick="zerarDadosRelatorios()" class="bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-500/50 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
+          <i class="ph ph-trash text-base"></i> Zerar Dados dos Relatórios
+        </button>
+
         <a href="/api/relatorios/demanda/csv" target="_blank" class="bg-slate-950 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
           <i class="ph ph-file-csv text-base"></i> Baixar Planilha para Excel (.CSV)
         </a>
@@ -291,8 +378,9 @@
 
   <script>
     let pedidosCache = [];
+    let historicoCache = [];
     let turnoAtivo = 'todos';
-    let base64QrAtual = '';
+    let base64LogoAtual = '';
 
     const REPOSITORIO_FOTOS = [
       { nome: "Pão de Queijo", url: "https://images.unsplash.com/photo-1598182198871-d3f4ab4fd181?w=400&q=80" },
@@ -328,6 +416,31 @@
       } catch(e) {}
     }
 
+    // Alternância entre Pedidos Ativos e Histórico de Entregues
+    function alternarAbaPrincipal(aba) {
+      const tabAtivos = document.getElementById('tab-ativos');
+      const tabHistorico = document.getElementById('tab-historico');
+      const secAtivos = document.getElementById('secao-pedidos-ativos');
+      const secHistorico = document.getElementById('secao-pedidos-historico');
+
+      if (aba === 'ativos') {
+        tabAtivos.className = "px-4 py-2 rounded-lg text-xs font-black bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(52,211,153,0.4)] flex items-center gap-1.5 transition";
+        tabHistorico.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1.5 transition";
+        secAtivos.classList.remove('hidden');
+        secHistorico.classList.add('hidden');
+        carregarPedidos();
+      } else {
+        tabHistorico.className = "px-4 py-2 rounded-lg text-xs font-black bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.4)] flex items-center gap-1.5 transition";
+        tabAtivos.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-emerald-300 flex items-center gap-1.5 transition";
+        secHistorico.classList.remove('hidden');
+        secAtivos.classList.add('hidden');
+        carregarHistorico();
+      }
+    }
+
+    function abrirModalLogo() { carregarConfigLogo(); document.getElementById('modal-logo').classList.remove('hidden'); }
+    function fecharModalLogo() { document.getElementById('modal-logo').classList.add('hidden'); }
+
     function abrirModalEstoque() { carregarGestaoCardapio(); document.getElementById('modal-estoque').classList.remove('hidden'); }
     function fecharModalEstoque() { document.getElementById('modal-estoque').classList.add('hidden'); }
 
@@ -349,9 +462,50 @@
       renderizarGaleriaRepositorio();
       document.getElementById('modal-produto-form').classList.remove('hidden');
     }
-
     function fecharModalProdutoForm() { document.getElementById('modal-produto-form').classList.add('hidden'); }
 
+    // Logo
+    async function carregarConfigLogo() {
+      const res = await fetch('/api/config/geral');
+      const data = await res.json();
+      base64LogoAtual = data.escola_logo || '';
+      atualizarPreviewLogo();
+      if (base64LogoAtual) {
+        const img = document.getElementById('img-logo-cantina');
+        img.src = base64LogoAtual;
+        img.classList.remove('hidden');
+        document.getElementById('fallback-logo-cantina').classList.add('hidden');
+      }
+    }
+
+    function processarArquivoLogo(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => { base64LogoAtual = e.target.result; atualizarPreviewLogo(); };
+      reader.readAsDataURL(file);
+    }
+
+    function atualizarPreviewLogo() {
+      const box = document.getElementById('box-preview-logo');
+      box.innerHTML = base64LogoAtual
+        ? `<img src="${base64LogoAtual}" class="w-full h-full object-cover">`
+        : `<span class="text-slate-500 text-[10px]">Sem logo</span>`;
+    }
+
+    async function salvarLogoEscola() {
+      if (!base64LogoAtual) { alert("Selecione uma imagem!"); return; }
+      await fetch('/api/config/logo', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ escola_logo: base64LogoAtual })
+      });
+      alert("Logotipo atualizado!");
+      fecharModalLogo();
+      carregarConfigLogo();
+    }
+
+    // Cardápio & Estoque
     function renderizarGaleriaRepositorio() {
       const container = document.getElementById('galeria-repositorio');
       container.innerHTML = '';
@@ -425,7 +579,7 @@
     }
 
     async function deletarProduto(id, nome) {
-      if (!confirm(`Deseja realmente remover '${nome}' do cardápio?`)) return;
+      if (!confirm(`Deseja remover '${nome}' do cardápio?`)) return;
       await fetch(`/api/produtos/${id}`, { method: 'DELETE' });
       carregarGestaoCardapio();
     }
@@ -484,31 +638,21 @@
       });
     }
 
+    // Configuração Pix Dinâmico
     async function carregarConfigPix() {
-      const res = await fetch('/api/config/pix');
+      const res = await fetch('/api/config/geral');
       const data = await res.json();
       document.getElementById('pix-chave-input').value = data.pix_chave || '';
-      base64QrAtual = data.pix_qrcode || '';
-      atualizarPreviewQrCode();
-    }
-
-    function processarArquivoQrCode(input) {
-      const file = input.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        base64QrAtual = e.target.result;
-        atualizarPreviewQrCode();
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function atualizarPreviewQrCode() {
-      const box = document.getElementById('box-preview-qr');
-      if (base64QrAtual) {
-        box.innerHTML = `<img src="${base64QrAtual}" alt="QR Code Pix" class="w-full h-full object-contain">`;
+      document.getElementById('pix-recebedor-input').value = data.pix_recebedor || 'CANTINA AGGEO';
+      document.getElementById('pix-cidade-input').value = data.pix_cidade || 'SOROCABA';
+      
+      const badgeMp = document.getElementById('badge-mp-status');
+      if (data.mp_configurado) {
+        badgeMp.textContent = "Mercado Pago Ativo";
+        badgeMp.className = "text-[9px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/40 font-bold";
       } else {
-        box.innerHTML = `<span class="text-slate-400 text-[10px]">Sem imagem de QR Code</span>`;
+        badgeMp.textContent = "Modo EMV Direto";
+        badgeMp.className = "text-[9px] px-2 py-0.5 rounded bg-slate-800 text-slate-400";
       }
     }
 
@@ -516,7 +660,9 @@
       e.preventDefault();
       const payload = {
         pix_chave: document.getElementById('pix-chave-input').value.trim(),
-        pix_qrcode: base64QrAtual
+        pix_recebedor: document.getElementById('pix-recebedor-input').value.trim(),
+        pix_cidade: document.getElementById('pix-cidade-input').value.trim(),
+        mp_access_token: document.getElementById('mp-token-input').value.trim()
       };
 
       await fetch('/api/config/pix', {
@@ -525,10 +671,11 @@
         body: JSON.stringify(payload)
       });
 
-      alert("QR Code e chave Pix atualizados no app do aluno!");
+      alert("Configurações do Pix dinâmico salvas com sucesso!");
       fecharModalPix();
     }
 
+    // Relatórios + Gráficos + Zerar Dados
     let chartItensInstance = null;
     let chartTurnosInstance = null;
 
@@ -541,20 +688,25 @@
 
       const tbody = document.getElementById('rep-tabela-itens');
       tbody.innerHTML = '';
-      dados.itens.forEach((it, idx) => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-950";
-        tr.innerHTML = `
-          <td class="py-2 px-3 flex items-center gap-2">
-            <span class="w-4 h-4 rounded-full bg-slate-800 text-cyan-300 text-center font-bold text-[9px] leading-4">${idx + 1}</span>
-            <span class="font-bold text-slate-200">${it.nome}</span>
-          </td>
-          <td class="py-2 px-3 text-center font-bold text-cyan-300">${it.total_unidades}</td>
-          <td class="py-2 px-3 text-center text-pink-400 font-bold">${it.participacao_pct}%</td>
-          <td class="py-2 px-3 text-right font-bold text-emerald-400">R$ ${it.receita_total.toFixed(2).replace('.', ',')}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+
+      if (dados.itens.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-slate-500">Nenhuma venda registrada ainda.</td></tr>';
+      } else {
+        dados.itens.forEach((it, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-950";
+          tr.innerHTML = `
+            <td class="py-2 px-3 flex items-center gap-2">
+              <span class="w-4 h-4 rounded-full bg-slate-800 text-cyan-300 text-center font-bold text-[9px] leading-4">${idx + 1}</span>
+              <span class="font-bold text-slate-200">${it.nome}</span>
+            </td>
+            <td class="py-2 px-3 text-center font-bold text-cyan-300">${it.total_unidades}</td>
+            <td class="py-2 px-3 text-center text-pink-400 font-bold">${it.participacao_pct}%</td>
+            <td class="py-2 px-3 text-right font-bold text-emerald-400">R$ ${it.receita_total.toFixed(2).replace('.', ',')}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
 
       const labelsItens = dados.itens.slice(0, 6).map(i => i.nome);
       const qtdsItens = dados.itens.slice(0, 6).map(i => i.total_unidades);
@@ -564,7 +716,7 @@
       chartItensInstance = new Chart(ctxItens, {
         type: 'bar',
         data: {
-          labels: labelsItens.length ? labelsItens : ['Nenhum'],
+          labels: labelsItens.length ? labelsItens : ['Sem dados'],
           datasets: [{
             label: 'Unidades Vendidas',
             data: qtdsItens.length ? qtdsItens : [0],
@@ -585,7 +737,7 @@
         }
       });
 
-      const labelsTurnos = dados.turnos.map(t => t.intervalo.split(' ')[0]);
+      const labelsTurnos = dados.turnos.map(t => t.intervalo);
       const pedidosTurnos = dados.turnos.map(t => t.total_pedidos);
 
       if (chartTurnosInstance) chartTurnosInstance.destroy();
@@ -593,10 +745,10 @@
       chartTurnosInstance = new Chart(ctxTurnos, {
         type: 'doughnut',
         data: {
-          labels: labelsTurnos.length ? labelsTurnos : ['Manhã', 'Tarde', 'Noite'],
+          labels: labelsTurnos.length ? labelsTurnos : ['16:10', '18:50'],
           datasets: [{
-            data: pedidosTurnos.length ? pedidosTurnos : [1, 1, 1],
-            backgroundColor: ['#06b6d4', '#ec4899', '#a855f7'],
+            data: pedidosTurnos.length ? pedidosTurnos : [0, 0],
+            backgroundColor: ['#06b6d4', '#ec4899'],
             borderColor: '#020617',
             borderWidth: 2
           }]
@@ -611,18 +763,35 @@
       });
     }
 
-    function filtrarTurno(turno) {
+    async function zerarDadosRelatorios() {
+      const confirmar = confirm(
+        "⚠️ ATENÇÃO: Isso apagará permanentemente todas as estatísticas de vendas, faturamento e o histórico de pedidos registrados. Deseja zerar os relatórios agora?"
+      );
+      if (!confirmar) return;
+
+      await fetch('/api/relatorios/zerar', { method: 'POST' });
+      alert("Todos os dados dos relatórios foram zerados com sucesso!");
+      carregarRelatorioGrafico();
+      carregarPedidos();
+      carregarHistorico();
+    }
+
+    // Pedidos Ativos (Somente Pix Confirmados)
+    function filtrarTurno(turno, btnEl) {
       turnoAtivo = turno;
       document.querySelectorAll('.turno-btn').forEach(btn => {
         btn.className = "turno-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 hover:bg-slate-800";
       });
-      event.target.className = "turno-btn active px-3.5 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]";
+      if (btnEl) {
+        btnEl.className = "turno-btn active px-3.5 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(6,182,212,0.4)]";
+      }
       renderizarCards();
     }
 
     async function carregarPedidos() {
       const res = await fetch('/api/pedidos/ativos');
       pedidosCache = await res.json();
+      document.getElementById('badge-qtd-ativos').textContent = pedidosCache.length;
       renderizarCards();
     }
 
@@ -635,14 +804,12 @@
         : pedidosCache.filter(p => p.intervalo === turnoAtivo);
 
       if (filtrados.length === 0) {
-        grid.innerHTML = '<div class="col-span-full py-16 text-center text-slate-500 font-mono text-xs">NENHUM PEDIDO ABERTO NESTE INTERVALO.</div>';
+        grid.innerHTML = '<div class="col-span-full py-16 text-center text-slate-500 font-mono text-xs">NENHUM PEDIDO PAGO AGUARDANDO PREPARO NESTE INTERVALO.</div>';
         return;
       }
 
       filtrados.forEach(p => {
-        const isDinheiro = p.metodo_pagamento === 'Dinheiro';
-        const precisaTroco = isDinheiro && p.troco_para > p.total;
-        const valorTroco = precisaTroco ? (p.troco_para - p.total).toFixed(2).replace('.', ',') : 0;
+        const isProfessor = p.tipo_usuario === 'Professor';
 
         const card = document.createElement('div');
         card.className = "cyber-panel rounded-2xl p-4 flex flex-col justify-between font-mono shadow-[0_4px_20px_rgba(0,0,0,0.4)] border border-slate-800 hover:border-cyan-500/50 transition duration-200";
@@ -657,9 +824,12 @@
         card.innerHTML = `
           <div>
             <div class="flex justify-between items-start mb-2">
-              <div>
+              <div class="flex items-center gap-1.5">
                 <span class="text-xs font-black bg-cyan-950 text-cyan-300 border border-cyan-500/40 px-2.5 py-0.5 rounded shadow-[0_0_8px_rgba(6,182,212,0.3)]">#${p.id}</span>
-                <span class="text-[11px] text-slate-400 ml-1.5">${p.horario}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isProfessor ? 'bg-fuchsia-950 text-fuchsia-300 border border-fuchsia-500/50' : 'bg-slate-900 text-slate-400 border border-slate-700'}">
+                  ${isProfessor ? '👨‍🏫 PROF' : '🎓 ALUNO'}
+                </span>
+                <span class="text-[11px] text-slate-400 ml-1">${p.horario}</span>
               </div>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded ${p.status.includes('Pronto') ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40' : 'bg-amber-950 text-amber-300 border border-amber-500/40'}">
                 ${p.status}
@@ -669,30 +839,24 @@
             <h3 class="font-black text-sm text-slate-100 mt-1 leading-snug">${p.aluno_nome}</h3>
             <div class="flex items-center gap-1.5 my-1.5 text-[11px]">
               <span class="text-slate-400">${p.turma}</span>
-              <span class="text-pink-400 bg-pink-950/40 px-1.5 py-0.5 rounded border border-pink-500/30">${p.intervalo}</span>
+              <span class="text-pink-400 bg-pink-950/40 px-1.5 py-0.5 rounded border border-pink-500/30 font-bold">${p.intervalo}</span>
             </div>
 
-            <div class="mb-3 p-2 rounded-xl text-xs font-semibold ${isDinheiro ? 'bg-amber-950/30 text-amber-300 border border-amber-500/30' : 'bg-pink-950/30 text-pink-300 border border-pink-500/30'}">
-              <span>Pagamento: <b>${p.metodo_pagamento}</b></span>
-              ${precisaTroco ? `<p class="mt-0.5 text-amber-400 font-black">⚠️ Levar Troco: R$ ${valorTroco} (paga com R$ ${p.troco_para.toFixed(2).replace('.', ',')})</p>` : ''}
+            <div class="mb-3 p-2 rounded-xl text-[11px] font-bold bg-emerald-950/40 text-emerald-300 border border-emerald-500/40 flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="ph ph-seal-check text-base"></i> PIX CONFIRMADO</span>
+              <span>R$ ${p.total.toFixed(2).replace('.', ',')}</span>
             </div>
 
             <ul class="mb-4 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">${itensHtml}</ul>
           </div>
 
-          <div>
-            <div class="flex justify-between items-center text-xs font-bold text-slate-300 mb-3 border-t border-slate-800/80 pt-2">
-              <span>VALOR A COBRAR:</span>
-              <span class="text-emerald-400 text-base font-black">R$ ${p.total.toFixed(2).replace('.', ',')}</span>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="mudarStatus('${p.id}', 'Pronto para Retirada')" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black py-2 rounded-xl shadow transition">
-                PRONTO
-              </button>
-              <button onclick="mudarStatus('${p.id}', 'Entregue')" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black py-2 rounded-xl shadow transition">
-                ENTREGAR
-              </button>
-            </div>
+          <div class="flex gap-2 pt-1">
+            <button onclick="mudarStatus('${p.id}', 'Pronto para Retirada')" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black py-2.5 rounded-xl shadow transition">
+              PRONTO
+            </button>
+            <button onclick="mudarStatus('${p.id}', 'Entregue')" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black py-2.5 rounded-xl shadow transition">
+              ENTREGAR
+            </button>
           </div>
         `;
         grid.appendChild(card);
@@ -703,11 +867,58 @@
       await fetch(`/api/pedidos/${id}/status?status=${encodeURIComponent(novoStatus)}`, { method: 'PATCH' });
       if (novoStatus === 'Entregue') {
         pedidosCache = pedidosCache.filter(p => p.id !== id);
+        document.getElementById('badge-qtd-ativos').textContent = pedidosCache.length;
+        carregarHistorico();
       } else {
         const ped = pedidosCache.find(p => p.id === id);
         if (ped) ped.status = novoStatus;
       }
       renderizarCards();
+    }
+
+    // Histórico de Pedidos Entregues
+    async function carregarHistorico() {
+      const res = await fetch('/api/pedidos/historico');
+      historicoCache = await res.json();
+      document.getElementById('badge-qtd-historico').textContent = historicoCache.length;
+      renderizarHistorico();
+    }
+
+    function renderizarHistorico() {
+      const tbody = document.getElementById('tabela-historico-body');
+      const filtro = (document.getElementById('busca-historico').value || '').toLowerCase();
+      tbody.innerHTML = '';
+
+      const lista = historicoCache.filter(h =>
+        h.id.toLowerCase().includes(filtro) ||
+        h.aluno_nome.toLowerCase().includes(filtro) ||
+        h.turma.toLowerCase().includes(filtro)
+      );
+
+      if (lista.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-slate-500">Nenhum pedido entregue registrado no histórico.</td></tr>';
+        return;
+      }
+
+      lista.forEach(h => {
+        const itensTexto = h.itens.map(i => `${i.qtd}x ${i.nome}`).join(', ');
+        const isProf = h.tipo_usuario === 'Professor';
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/60 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-black text-cyan-300">#${h.id}</td>
+          <td class="py-3 px-4">
+            <span class="font-bold text-slate-100 block">${h.aluno_nome}</span>
+            <span class="text-[10px] ${isProf ? 'text-fuchsia-400' : 'text-slate-400'}">${h.tipo_usuario}</span>
+          </td>
+          <td class="py-3 px-4 text-slate-300">${h.turma}</td>
+          <td class="py-3 px-4"><span class="bg-pink-950/60 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded text-[10px]">${h.intervalo}</span></td>
+          <td class="py-3 px-4 text-slate-300 max-w-xs truncate" title="${itensTexto}">${itensTexto}</td>
+          <td class="py-3 px-4 text-right font-black text-emerald-400">R$ ${h.total.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-4 text-right text-slate-400 text-[11px]">${h.entregue_em}</td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function conectarWS() {
@@ -717,6 +928,7 @@
       ws.onmessage = (event) => {
         const novoPedido = JSON.parse(event.data);
         pedidosCache.unshift(novoPedido);
+        document.getElementById('badge-qtd-ativos').textContent = pedidosCache.length;
         renderizarCards();
         testarSomAlerta();
       };
@@ -724,7 +936,9 @@
       ws.onclose = () => setTimeout(conectarWS, 3000);
     }
 
+    carregarConfigLogo();
     carregarPedidos();
+    carregarHistorico();
     conectarWS();
   </script>
 </body>
