@@ -281,8 +281,8 @@ def criar_cobranca_mercadopago(access_token: str, order_id: str, total: float, c
         "payment_method_id": "pix",
         "external_reference": order_id,
         "payer": {
-            "email": "cantina.aluno@escola.sp.gov.br",
-            "first_name": cliente_nome[:30],
+            "email": f"pedido.{order_id.lower()}@cantinaaggeo.com.br",
+            "first_name": (cliente_nome or "Cliente")[:30],
         },
     }
     req = urllib.request.Request(
@@ -291,28 +291,36 @@ def criar_cobranca_mercadopago(access_token: str, order_id: str, total: float, c
         headers={
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
+            "User-Agent": "CantinaExpress/1.0",
             "X-Idempotency-Key": f"cantina-{order_id}-{uuid.uuid4().hex[:8]}",
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
-        poi = data.get("point_of_interaction", {}).get("transaction_data", {})
-        return {
-            "mp_payment_id": str(data.get("id", "")),
-            "pix_payload": poi.get("qr_code", ""),
-            "pix_qrcode_base64": poi.get("qr_code_base64", ""),
-        }
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            poi = data.get("point_of_interaction", {}).get("transaction_data", {})
+            return {
+                "mp_payment_id": str(data.get("id", "")),
+                "pix_payload": poi.get("qr_code", ""),
+                "pix_qrcode_base64": poi.get("qr_code_base64", ""),
+            }
+    except urllib.error.HTTPError as e:
+        detalhe = e.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"Erro Mercado Pago ({e.code}): {detalhe}")
 
 
 def consultar_status_mercadopago(access_token: str, mp_payment_id: str) -> str:
     url = f"https://api.mercadopago.com/v1/payments/{mp_payment_id}"
     req = urllib.request.Request(
         url,
-        headers={"Authorization": f"Bearer {access_token}"},
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "User-Agent": "CantinaExpress/1.0",
+        },
         method="GET",
     )
-    with urllib.request.urlopen(req, timeout=8) as resp:
+    with urllib.request.urlopen(req, timeout=10) as resp:
         data = json.loads(resp.read().decode("utf-8"))
         return data.get("status", "pending")
 
@@ -585,9 +593,11 @@ async def criar_pedido(pedido: PedidoRequest):
                 pix_payload = mp_res["pix_payload"]
                 pix_qrcode_base64 = mp_res["pix_qrcode_base64"]
                 modo_gateway = "mercadopago"
-            except Exception:
-                # Fallback seguro para BR Code EMV caso API externa oscile
-                pix_payload = gerar_payload_pix(pix_chave, total_calculado, order_id, pix_recebedor, pix_cidade)
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Falha ao gerar cobrança Pix no Mercado Pago: {exc}",
+                )
         else:
             pix_payload = gerar_payload_pix(pix_chave, total_calculado, order_id, pix_recebedor, pix_cidade)
 
@@ -651,21 +661,26 @@ async def verificar_pagamento_pedido(pedido_id: str):
         mp_token = row_tk["valor"].strip() if row_tk and row_tk["valor"] else ""
         mp_payment_id = ped["mp_payment_id"]
 
-    if mp_token and mp_payment_id:
-        try:
-            status_mp = consultar_status_mercadopago(mp_token, mp_payment_id)
-            if status_mp == "approved":
-                await confirmar_pagamento_pedido(pedido_id)
-                return {
-                    "pago": True,
-                    "codigo_retirada": pedido_id,
-                    "total": ped["total"],
-                    "intervalo": ped["intervalo"],
-                }
-        except Exception:
-            pass
+    if not mp_token or not mp_payment_id:
+        return {
+            "pago": False,
+            "status": "sem_gateway",
+            "detalhe": "Pedido gerado sem ID do Mercado Pago. Verifique o Access Token.",
+        }
 
-    return {"pago": False, "status": "pending"}
+    try:
+        status_mp = consultar_status_mercadopago(mp_token, mp_payment_id)
+        if status_mp == "approved":
+            await confirmar_pagamento_pedido(pedido_id)
+            return {
+                "pago": True,
+                "codigo_retirada": pedido_id,
+                "total": ped["total"],
+                "intervalo": ped["intervalo"],
+            }
+        return {"pago": False, "status": status_mp}
+    except Exception as exc:
+        return {"pago": False, "status": "erro_api", "detalhe": str(exc)}
 
 
 @app.post("/api/pagamentos/confirmar/{pedido_id}")
@@ -872,3 +887,8 @@ def baixar_relatorio_csv():
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=demanda_aggeo_{datetime.now().strftime('%Y%m%d')}.csv"},
     )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
