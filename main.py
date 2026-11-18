@@ -326,7 +326,7 @@ def consultar_status_mercadopago(access_token: str, mp_payment_id: str) -> str:
 
 
 async def confirmar_pagamento_pedido(pedido_id: str) -> bool:
-    """Confirma o pagamento, baixa estoque e envia pedido ao painel da cantina."""
+    """Confirma o pagamento, baixa estoque e envia pedido para a fila de preparo da cantina."""
     notificar_payload = None
 
     with sqlite3.connect(DB_PATH) as conn:
@@ -357,6 +357,7 @@ async def confirmar_pagamento_pedido(pedido_id: str) -> bool:
         conn.commit()
 
         notificar_payload = {
+            "evento": "pagamento_confirmado",
             "id": ped["id"],
             "tipo_usuario": ped["tipo_usuario"],
             "aluno_nome": ped["aluno_nome"],
@@ -601,7 +602,7 @@ async def criar_pedido(pedido: PedidoRequest):
         else:
             pix_payload = gerar_payload_pix(pix_chave, total_calculado, order_id, pix_recebedor, pix_cidade)
 
-        # Pedido nasce como Aguardando Pagamento (não vai para a cantina ainda)
+        # Pedido nasce como Aguardando Pagamento (vai para aba Aguardando Conferência)
         cursor.execute(
             """INSERT INTO pedidos 
                (id, tipo_usuario, aluno_nome, turma, intervalo, metodo_pagamento, pagamento_status,
@@ -621,13 +622,33 @@ async def criar_pedido(pedido: PedidoRequest):
             ),
         )
 
+        itens_lista = []
         for prod_id, nome_prod, qtd_prod, preco_prod in itens_validados:
             cursor.execute(
                 "INSERT INTO itens_pedido (pedido_id, produto_id, nome, qtd, preco) VALUES (?, ?, ?, ?, ?)",
                 (order_id, prod_id, nome_prod, qtd_prod, preco_prod),
             )
+            itens_lista.append({
+                "produto_id": prod_id,
+                "nome": nome_prod,
+                "qtd": qtd_prod,
+                "preco": preco_prod,
+            })
 
         conn.commit()
+
+    # Notifica o painel da cantina em tempo real sobre novo pedido aguardando conferência
+    await notifier.notify_all({
+        "evento": "novo_pendente",
+        "id": order_id,
+        "tipo_usuario": pedido.tipo_usuario or "Aluno",
+        "aluno_nome": pedido.aluno_nome,
+        "turma": pedido.turma,
+        "intervalo": pedido.intervalo,
+        "total": total_calculado,
+        "horario": agora.split(" ")[1][:5],
+        "itens": itens_lista,
+    })
 
     return {
         "pedido_id": order_id,
@@ -648,6 +669,9 @@ async def verificar_pagamento_pedido(pedido_id: str):
         if not ped:
             raise HTTPException(status_code=404, detail="Pedido não encontrado.")
 
+        if ped["status"] == "Cancelado":
+            return {"pago": False, "status": "Cancelado"}
+
         if ped["pagamento_status"] == "approved":
             return {
                 "pago": True,
@@ -664,8 +688,7 @@ async def verificar_pagamento_pedido(pedido_id: str):
     if not mp_token or not mp_payment_id:
         return {
             "pago": False,
-            "status": "sem_gateway",
-            "detalhe": "Pedido gerado sem ID do Mercado Pago. Verifique o Access Token.",
+            "status": "aguardando_conferencia",
         }
 
     try:
@@ -685,11 +708,24 @@ async def verificar_pagamento_pedido(pedido_id: str):
 
 @app.post("/api/pagamentos/confirmar/{pedido_id}")
 async def confirmar_pagamento_endpoint(pedido_id: str):
-    """Endpoint de confirmação automática (chamado pelo webhook bancário ou simulador)."""
+    """Confirma o Pix (via webhook ou conferência manual da cantina) e libera o código ao cliente."""
     ok = await confirmar_pagamento_pedido(pedido_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Pedido não encontrado.")
     return {"status": "approved", "pedido_id": pedido_id}
+
+
+@app.patch("/api/pedidos/{pedido_id}/cancelar")
+def cancelar_pedido_pendente(pedido_id: str):
+    """Cancela/recusa um pedido pendente na aba Aguardando Conferência."""
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE pedidos SET status = 'Cancelado' WHERE id = ? AND pagamento_status != 'approved'",
+            (pedido_id,),
+        )
+        conn.commit()
+    return {"status": "Cancelado", "pedido_id": pedido_id}
 
 
 @app.post("/api/webhooks/mercadopago")
@@ -729,7 +765,41 @@ async def webhook_mercadopago(request: Request):
     return {"status": "ok"}
 
 
-# --- Pedidos Ativos (Somente Pagos) & Histórico de Entregues ---
+# --- Listagem de Pedidos: Aguardando Conferência, Pagos Ativos & Histórico ---
+@app.get("/api/pedidos/pendentes")
+def listar_pedidos_pendentes():
+    """Retorna pedidos aguardando confirmação de Pix para a aba Aguardando Conferência."""
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT * FROM pedidos 
+               WHERE pagamento_status = 'pending' AND status = 'Aguardando Pagamento' 
+               ORDER BY data_hora DESC"""
+        )
+        pedidos = cursor.fetchall()
+
+        resultado = []
+        for p in pedidos:
+            cursor.execute("SELECT produto_id, nome, qtd, preco FROM itens_pedido WHERE pedido_id = ?", (p["id"],))
+            itens = [dict(row) for row in cursor.fetchall()]
+            resultado.append({
+                "id": p["id"],
+                "tipo_usuario": p["tipo_usuario"],
+                "aluno_nome": p["aluno_nome"],
+                "turma": p["turma"],
+                "intervalo": p["intervalo"],
+                "metodo_pagamento": p["metodo_pagamento"],
+                "pagamento_status": p["pagamento_status"],
+                "total": p["total"],
+                "status": p["status"],
+                "horario": p["data_hora"].split(" ")[1][:5],
+                "data_hora": p["data_hora"],
+                "itens": itens,
+            })
+        return resultado
+
+
 @app.get("/api/pedidos/ativos")
 def listar_pedidos_ativos():
     with sqlite3.connect(DB_PATH) as conn:

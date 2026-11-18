@@ -44,7 +44,7 @@
         <h1 class="text-lg md:text-xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-pink-400">
           TERMINAL DA CANTINA // OPS CONTROL
         </h1>
-        <p class="text-xs text-slate-400 font-mono">Exibição automática de pedidos Pix confirmados • Intervalos 16:10 e 18:50</p>
+        <p class="text-xs text-slate-400 font-mono">Conferência Pix, Fila de Preparo e Histórico • Intervalos 16:10 e 18:50</p>
       </div>
     </div>
     
@@ -68,12 +68,16 @@
     </div>
   </header>
 
-  <!-- Abas Principais: Pedidos Ativos Pagos vs Histórico de Entregues -->
+  <!-- Abas Principais: Pedidos Pagos (Ativos) | Aguardando Conferência | Histórico de Entregues -->
   <div class="flex items-center justify-between flex-wrap gap-3 mb-5 font-mono">
-    <div class="flex gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
+    <div class="flex flex-wrap gap-2 bg-slate-900 p-1.5 rounded-xl border border-slate-800">
       <button id="tab-ativos" onclick="alternarAbaPrincipal('ativos')" class="px-4 py-2 rounded-lg text-xs font-black bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(52,211,153,0.4)] flex items-center gap-1.5 transition">
         <i class="ph ph-check-circle text-base"></i> PEDIDOS PAGOS (ATIVOS)
         <span id="badge-qtd-ativos" class="bg-slate-950 text-emerald-400 px-1.5 py-0.2 rounded text-[10px]">0</span>
+      </button>
+      <button id="tab-conferencia" onclick="alternarAbaPrincipal('conferencia')" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-amber-300 flex items-center gap-1.5 transition">
+        <i class="ph ph-hourglass-high text-base"></i> AGUARDANDO CONFERÊNCIA
+        <span id="badge-qtd-conferencia" class="bg-amber-950 text-amber-300 border border-amber-500/40 px-1.5 py-0.2 rounded text-[10px]">0</span>
       </button>
       <button id="tab-historico" onclick="alternarAbaPrincipal('historico')" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1.5 transition">
         <i class="ph ph-clock-counter-clockwise text-base"></i> HISTÓRICO DE ENTREGUES
@@ -112,7 +116,30 @@
     </div>
   </div>
 
-  <!-- SEÇÃO 2: HISTÓRICO DE PEDIDOS ENTREGUES -->
+  <!-- SEÇÃO 2: AGUARDANDO CONFERÊNCIA (PIX PENDENTE DE APROVAÇÃO) -->
+  <div id="secao-pedidos-conferencia" class="hidden space-y-4 font-mono">
+    <div class="cyber-panel p-4 rounded-2xl border-amber-500/40 bg-amber-950/10 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-sm font-black text-amber-300 uppercase flex items-center gap-2">
+          <i class="ph ph-magnifying-glass text-base"></i> Pedidos Aguardando Conferência de Pix
+        </h2>
+        <p class="text-[11px] text-slate-300 mt-0.5">
+          Confira o recebimento no extrato bancário (ou aguarde a baixa automática do Mercado Pago). Ao clicar em <b>Confirmar Pix &amp; Liberar</b>, o código de retirada aparece imediatamente na tela do cliente.
+        </p>
+      </div>
+      <button onclick="carregarPendentes()" class="bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/40 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition">
+        <i class="ph ph-arrows-clockwise"></i> Atualizar Lista
+      </button>
+    </div>
+
+    <div id="grid-conferencia" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div class="col-span-full py-16 text-center text-slate-500 text-xs">
+        NENHUM PEDIDO AGUARDANDO CONFERÊNCIA NO MOMENTO.
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3: HISTÓRICO DE PEDIDOS ENTREGUES -->
   <div id="secao-pedidos-historico" class="hidden space-y-4 font-mono">
     <div class="cyber-panel p-4 rounded-2xl border-cyan-500/30 flex flex-wrap items-center justify-between gap-3">
       <div>
@@ -181,7 +208,7 @@
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div>
           <span class="text-[10px] text-pink-400 uppercase font-bold tracking-wider">E.E. Prof. Aggeo Pereira do Amaral</span>
-          <h2 class="text-base font-black text-cyan-300 tracking-wide">GESTÃO DE ITENS & ESTOQUE DIÁRIO</h2>
+          <h2 class="text-base font-black text-cyan-300 tracking-wide">GESTÃO DE ITENS &amp; ESTOQUE DIÁRIO</h2>
         </div>
         <button onclick="fecharModalEstoque()" class="text-slate-400 hover:text-pink-400 text-2xl"><i class="ph ph-x"></i></button>
       </div>
@@ -267,7 +294,7 @@
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div>
           <span class="text-[10px] text-pink-400 font-bold uppercase">Integração Pix Dinâmico</span>
-          <h2 class="text-base font-black text-pink-300">CONFIGURAÇÃO PIX & GATEWAY</h2>
+          <h2 class="text-base font-black text-pink-300">CONFIGURAÇÃO PIX &amp; GATEWAY</h2>
         </div>
         <button onclick="fecharModalPix()" class="text-slate-400 hover:text-pink-400 text-2xl"><i class="ph ph-x"></i></button>
       </div>
@@ -291,12 +318,12 @@
 
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5">
           <div class="flex items-center justify-between">
-            <label class="block text-cyan-300 font-bold uppercase text-[10px]">Token Mercado Pago (Opcional - Confirmação Real)</label>
+            <label class="block text-cyan-300 font-bold uppercase text-[10px]">Token Mercado Pago (Opcional - Baixa Automática)</label>
             <span id="badge-mp-status" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Modo EMV Direto</span>
           </div>
           <input type="password" id="mp-token-input" placeholder="APP_USR-0000000000000000-..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 outline-none focus:border-cyan-400">
           <p class="text-[10px] text-slate-400 leading-relaxed">
-            Com o Access Token preenchido, o sistema gera a cobrança na API do Mercado Pago e confirma o pagamento bancário 100% sozinho.
+            Sem token, os pedidos caem na aba <b>Aguardando Conferência</b> para você aprovar após conferir o Pix no banco. Com token do Mercado Pago, a baixa é automática.
           </p>
         </div>
 
@@ -363,7 +390,6 @@
         </table>
       </div>
 
-      <!-- Rodapé do Relatório: Zerar Dados + Exportar Excel -->
       <div class="pt-3 border-t border-slate-800 flex flex-wrap justify-between items-center gap-3">
         <button onclick="zerarDadosRelatorios()" class="bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-500/50 text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-2 transition">
           <i class="ph ph-trash text-base"></i> Zerar Dados dos Relatórios
@@ -378,6 +404,7 @@
 
   <script>
     let pedidosCache = [];
+    let pendentesCache = [];
     let historicoCache = [];
     let turnoAtivo = 'todos';
     let base64LogoAtual = '';
@@ -398,42 +425,62 @@
     ];
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function testarSomAlerta() {
+    function testarSomAlerta(tipo = 'aprovado') {
       try {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
-        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.45);
+        if (tipo === 'pendente') {
+          osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(554.37, audioCtx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.25);
+        } else {
+          osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+          osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
+          osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.3);
+          gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.45);
+        }
       } catch(e) {}
     }
 
-    // Alternância entre Pedidos Ativos e Histórico de Entregues
+    // Alternância entre as 3 Abas Principais
     function alternarAbaPrincipal(aba) {
       const tabAtivos = document.getElementById('tab-ativos');
+      const tabConferencia = document.getElementById('tab-conferencia');
       const tabHistorico = document.getElementById('tab-historico');
+
       const secAtivos = document.getElementById('secao-pedidos-ativos');
+      const secConferencia = document.getElementById('secao-pedidos-conferencia');
       const secHistorico = document.getElementById('secao-pedidos-historico');
+
+      tabAtivos.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-emerald-300 flex items-center gap-1.5 transition";
+      tabConferencia.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-amber-300 flex items-center gap-1.5 transition";
+      tabHistorico.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1.5 transition";
+
+      secAtivos.classList.add('hidden');
+      secConferencia.classList.add('hidden');
+      secHistorico.classList.add('hidden');
 
       if (aba === 'ativos') {
         tabAtivos.className = "px-4 py-2 rounded-lg text-xs font-black bg-emerald-500 text-slate-950 shadow-[0_0_12px_rgba(52,211,153,0.4)] flex items-center gap-1.5 transition";
-        tabHistorico.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-cyan-300 flex items-center gap-1.5 transition";
         secAtivos.classList.remove('hidden');
-        secHistorico.classList.add('hidden');
         carregarPedidos();
+      } else if (aba === 'conferencia') {
+        tabConferencia.className = "px-4 py-2 rounded-lg text-xs font-black bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.4)] flex items-center gap-1.5 transition";
+        secConferencia.classList.remove('hidden');
+        carregarPendentes();
       } else {
         tabHistorico.className = "px-4 py-2 rounded-lg text-xs font-black bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.4)] flex items-center gap-1.5 transition";
-        tabAtivos.className = "px-4 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-emerald-300 flex items-center gap-1.5 transition";
         secHistorico.classList.remove('hidden');
-        secAtivos.classList.add('hidden');
         carregarHistorico();
       }
     }
@@ -773,10 +820,103 @@
       alert("Todos os dados dos relatórios foram zerados com sucesso!");
       carregarRelatorioGrafico();
       carregarPedidos();
+      carregarPendentes();
       carregarHistorico();
     }
 
-    // Pedidos Ativos (Somente Pix Confirmados)
+    // --- AGUARDANDO CONFERÊNCIA (PIX PENDENTE) ---
+    async function carregarPendentes() {
+      const res = await fetch('/api/pedidos/pendentes');
+      pendentesCache = await res.json();
+      document.getElementById('badge-qtd-conferencia').textContent = pendentesCache.length;
+      renderizarPendentes();
+    }
+
+    function renderizarPendentes() {
+      const grid = document.getElementById('grid-conferencia');
+      grid.innerHTML = '';
+
+      if (pendentesCache.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-16 text-center text-slate-500 font-mono text-xs">NENHUM PEDIDO AGUARDANDO CONFERÊNCIA NO MOMENTO.</div>';
+        return;
+      }
+
+      pendentesCache.forEach(p => {
+        const isProfessor = p.tipo_usuario === 'Professor';
+        const card = document.createElement('div');
+        card.className = "cyber-panel rounded-2xl p-4 flex flex-col justify-between font-mono shadow-[0_4px_20px_rgba(245,158,11,0.12)] border border-amber-500/40 hover:border-amber-400 transition duration-200";
+
+        const itensHtml = p.itens.map(i => `
+          <li class="flex justify-between items-center py-1 text-xs border-b border-slate-800/80">
+            <span class="font-bold text-slate-200">${i.qtd}x ${i.nome}</span>
+            <span class="text-cyan-400 font-semibold">R$ ${(i.preco * i.qtd).toFixed(2).replace('.', ',')}</span>
+          </li>
+        `).join('');
+
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-black bg-amber-950 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded">#${p.id}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isProfessor ? 'bg-fuchsia-950 text-fuchsia-300 border border-fuchsia-500/50' : 'bg-slate-900 text-slate-400 border border-slate-700'}">
+                  ${isProfessor ? '👨‍🏫 PROF' : '🎓 ALUNO'}
+                </span>
+                <span class="text-[11px] text-slate-400 ml-1">${p.horario}</span>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-500/40 animate-pulse">
+                CONFERIR PIX
+              </span>
+            </div>
+
+            <h3 class="font-black text-sm text-slate-100 mt-1 leading-snug">${p.aluno_nome}</h3>
+            <div class="flex items-center gap-1.5 my-1.5 text-[11px]">
+              <span class="text-slate-400">${p.turma}</span>
+              <span class="text-pink-400 bg-pink-950/40 px-1.5 py-0.5 rounded border border-pink-500/30 font-bold">${p.intervalo}</span>
+            </div>
+
+            <div class="mb-3 p-2.5 rounded-xl text-xs font-black bg-amber-950/40 text-amber-300 border border-amber-500/40 flex items-center justify-between">
+              <span class="flex items-center gap-1.5"><i class="ph ph-clock text-base"></i> VALOR DO PIX:</span>
+              <span class="text-sm text-amber-200">R$ ${p.total.toFixed(2).replace('.', ',')}</span>
+            </div>
+
+            <ul class="mb-4 bg-slate-950/80 p-2.5 rounded-xl border border-slate-800">${itensHtml}</ul>
+          </div>
+
+          <div class="flex gap-2 pt-1">
+            <button onclick="confirmarPixManual('${p.id}', '${p.aluno_nome}')" class="flex-1 bg-gradient-to-r from-emerald-500 to-cyan-400 hover:brightness-110 text-slate-950 text-[11px] font-black py-2.5 px-2 rounded-xl shadow-[0_0_12px_rgba(52,211,153,0.4)] transition flex items-center justify-center gap-1">
+              <i class="ph ph-check-circle text-sm font-bold"></i> CONFIRMAR PIX &amp; LIBERAR
+            </button>
+            <button onclick="cancelarPedidoPendente('${p.id}', '${p.aluno_nome}')" title="Cancelar pedido não pago" class="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 text-xs font-bold px-3 py-2.5 rounded-xl transition">
+              <i class="ph ph-x-circle text-base"></i>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function confirmarPixManual(id, nome) {
+      const ok = confirm(`Confirmar que o Pix do pedido #${id} (${nome}) caiu na conta e liberar o código ao cliente?`);
+      if (!ok) return;
+
+      const res = await fetch(`/api/pagamentos/confirmar/${id}`, { method: 'POST' });
+      if (res.ok) {
+        await carregarPendentes();
+        await carregarPedidos();
+      } else {
+        alert("Erro ao confirmar o pagamento.");
+      }
+    }
+
+    async function cancelarPedidoPendente(id, nome) {
+      const ok = confirm(`Deseja cancelar e remover o pedido não pago #${id} (${nome})?`);
+      if (!ok) return;
+
+      await fetch(`/api/pedidos/${id}/cancelar`, { method: 'PATCH' });
+      await carregarPendentes();
+    }
+
+    // --- PEDIDOS ATIVOS (SOMENTE PIX CONFIRMADOS) ---
     function filtrarTurno(turno, btnEl) {
       turnoAtivo = turno;
       document.querySelectorAll('.turno-btn').forEach(btn => {
@@ -876,7 +1016,7 @@
       renderizarCards();
     }
 
-    // Histórico de Pedidos Entregues
+    // --- HISTÓRICO DE PEDIDOS ENTREGUES ---
     async function carregarHistorico() {
       const res = await fetch('/api/pedidos/historico');
       historicoCache = await res.json();
@@ -921,16 +1061,21 @@
       });
     }
 
+    // --- WEBSOCKET TEMPO REAL ---
     function conectarWS() {
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(`${proto}//${window.location.host}/ws/pedidos`);
 
       ws.onmessage = (event) => {
-        const novoPedido = JSON.parse(event.data);
-        pedidosCache.unshift(novoPedido);
-        document.getElementById('badge-qtd-ativos').textContent = pedidosCache.length;
-        renderizarCards();
-        testarSomAlerta();
+        const payload = JSON.parse(event.data);
+        if (payload.evento === 'novo_pendente') {
+          carregarPendentes();
+          testarSomAlerta('pendente');
+        } else {
+          carregarPendentes();
+          carregarPedidos();
+          testarSomAlerta('aprovado');
+        }
       };
 
       ws.onclose = () => setTimeout(conectarWS, 3000);
@@ -938,6 +1083,7 @@
 
     carregarConfigLogo();
     carregarPedidos();
+    carregarPendentes();
     carregarHistorico();
     conectarWS();
   </script>

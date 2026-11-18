@@ -52,7 +52,7 @@
       </div>
       <div>
         <span class="inline-flex items-center gap-1.5 bg-cyan-950/80 border border-cyan-500/40 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-cyan-300 shadow-[0_0_8px_rgba(6,182,212,0.3)]">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> PIX AUTOMÁTICO
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> PIX ONLINE
         </span>
       </div>
     </div>
@@ -209,7 +209,7 @@
         <!-- Resumo de Valor -->
         <div class="bg-slate-950 p-3 rounded-xl border border-pink-500/40 flex items-center justify-between">
           <div>
-            <span class="text-[10px] text-slate-400 uppercase block">Pagamento via Pix Automático</span>
+            <span class="text-[10px] text-slate-400 uppercase block">Pagamento via Pix</span>
             <span class="text-[11px] text-pink-300 font-bold">Código liberado após confirmação</span>
           </div>
           <span id="checkout-resumo-total" class="text-lg font-black text-emerald-400">R$ 0,00</span>
@@ -222,7 +222,7 @@
     </div>
   </div>
 
-  <!-- Modal Etapa 2: Pagamento Pix Automático (QR Code Dinâmico + Polling) -->
+  <!-- Modal Etapa 2: Pagamento Pix + Espera de Confirmação -->
   <div id="modal-pagamento-pix" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-4 font-mono">
     <div class="bg-slate-900 border-2 border-pink-500/70 w-full max-w-md rounded-2xl p-6 text-center space-y-4 shadow-[0_0_35px_rgba(236,72,153,0.35)]">
       
@@ -231,7 +231,7 @@
           <span class="text-[10px] text-pink-400 font-bold uppercase block">Pagamento Instantâneo</span>
           <h3 class="text-sm font-black text-slate-100">ESCANEIE O QR CODE PIX</h3>
         </div>
-        <button onclick="cancelarEsperaPix()" class="text-slate-400 hover:text-rose-400 text-xl" title="Cancelar">
+        <button onclick="cancelarEsperaPix()" class="text-slate-400 hover:text-rose-400 text-xl" title="Fechar">
           <i class="ph ph-x"></i>
         </button>
       </div>
@@ -257,22 +257,15 @@
         </div>
       </div>
 
-      <!-- Status da Verificação Automática -->
+      <!-- Status da Verificação -->
       <div class="bg-pink-950/30 border border-pink-500/40 rounded-xl p-3 space-y-1.5">
         <div class="flex items-center justify-center gap-2 text-xs font-bold text-pink-300">
           <i class="ph ph-spinner-gap animate-spin text-lg text-cyan-400"></i>
-          <span>AGUARDANDO CONFIRMAÇÃO DO BANCO...</span>
+          <span>AGUARDANDO CONFIRMAÇÃO DO PAGAMENTO...</span>
         </div>
         <p class="text-[10px] text-slate-400 leading-relaxed">
-          Assim que o Pix for pago no app do seu banco, o sistema confirmará automaticamente e liberará o código do seu lanche.
+          Mantenha esta tela aberta após pagar no app do banco. Assim que o pagamento for confirmado, o código do seu pedido será liberado aqui automaticamente.
         </p>
-      </div>
-
-      <!-- Botão de Simulação Bancária (Ativo apenas quando não há token Mercado Pago externo) -->
-      <div id="box-simulador-bancario" class="hidden pt-1 border-t border-slate-800">
-        <button type="button" onclick="simularConfirmacaoBanco()" class="w-full bg-slate-800 hover:bg-emerald-950 text-emerald-400 border border-emerald-500/40 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider transition flex items-center justify-center gap-1.5">
-          <i class="ph ph-check-square-offset text-sm"></i> Simular Confirmação Bancária (Modo Teste)
-        </button>
       </div>
     </div>
   </div>
@@ -628,14 +621,6 @@
         });
       }
 
-      // Mostra botão de simulação apenas se não houver gateway Mercado Pago configurado
-      const boxSim = document.getElementById('box-simulador-bancario');
-      if (dadosPix.modo_gateway !== 'mercadopago') {
-        boxSim.classList.remove('hidden');
-      } else {
-        boxSim.classList.add('hidden');
-      }
-
       document.getElementById('modal-pagamento-pix').classList.remove('hidden');
       iniciarPollingPagamento(dadosPix.pedido_id);
     }
@@ -649,14 +634,13 @@
           if (statusData.pago) {
             clearInterval(intervaloPollingPix);
             liberarComandaConfirmada(statusData);
+          } else if (statusData.status === 'Cancelado') {
+            clearInterval(intervaloPollingPix);
+            document.getElementById('modal-pagamento-pix').classList.add('hidden');
+            alert("Este pedido foi cancelado pela cantina por falta de identificação do Pix.");
           }
         } catch (e) {}
       }, 2500);
-    }
-
-    async function simularConfirmacaoBanco() {
-      if (!pedidoAtualId) return;
-      await fetch(`/api/pagamentos/confirmar/${pedidoAtualId}`, { method: 'POST' });
     }
 
     function liberarComandaConfirmada(dadosConfirmados) {
@@ -665,7 +649,7 @@
 
       document.getElementById('res-codigo').textContent = `#${dadosConfirmados.codigo_retirada}`;
       document.getElementById('res-instrucao').innerHTML = `
-        Pagamento via Pix de <b>R$ ${dadosConfirmados.total.toFixed(2).replace('.', ',')}</b> confirmado automaticamente!
+        Pagamento via Pix de <b>R$ ${dadosConfirmados.total.toFixed(2).replace('.', ',')}</b> confirmado!
         <br>Seu pedido já foi encaminhado para preparo e estará pronto para retirada às <b>${dadosConfirmados.intervalo}</b>.
       `;
       document.getElementById('modal-sucesso').classList.remove('hidden');
